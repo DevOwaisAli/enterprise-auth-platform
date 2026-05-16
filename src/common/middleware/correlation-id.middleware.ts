@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { CORRELATION_ID_HEADER } from '@common/constants';
 import { type RequestWithContext } from '@common/types';
+import { RequestContext, extractClientIp, extractUserAgent } from '@common/utils/request-context';
 
 @Injectable()
 export class CorrelationIdMiddleware implements NestMiddleware {
@@ -12,6 +13,15 @@ export class CorrelationIdMiddleware implements NestMiddleware {
     const correlationId = incoming && incoming.length > 0 ? incoming : uuidv4();
     req.correlationId = correlationId;
     res.setHeader(CORRELATION_ID_HEADER, correlationId);
-    next();
+
+    RequestContext.run(
+      {
+        correlationId,
+        ip: extractClientIp(req),
+        userAgent: extractUserAgent(req),
+        startedAt: Date.now(),
+      },
+      () => next(),
+    );
   }
 }
