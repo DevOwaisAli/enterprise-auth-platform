@@ -74,20 +74,20 @@ src/
 
 ## Unified API response envelope
 
-Success:
+Every successful response is wrapped:
 
 ```json
 {
   "success": true,
   "statusCode": 200,
   "message": "Success",
-  "data": { },
+  "data": { /* whatever the controller returned */ },
   "timestamp": "2026-01-01T00:00:00.000Z",
   "correlationId": "uuid-v4"
 }
 ```
 
-Error:
+Every error response:
 
 ```json
 {
@@ -101,7 +101,7 @@ Error:
 }
 ```
 
-Per-handler messages: `@ResponseMessage('User created')` on the controller method.
+Per-handler success message: `@ResponseMessage('User created')` on the controller method.
 
 ## Logging
 
@@ -110,6 +110,16 @@ Pino is wired as the app-wide Nest logger. In development with `LOG_PRETTY=true`
 - **Levels**: `fatal`, `error`, `warn`, `info`, `debug`, `trace`
 - **Redaction**: `Authorization` / `Cookie` headers, `password`, `*.token`, `*.secret` are auto-replaced with `[REDACTED]`.
 - **Correlation IDs** are attached to every line via `customProps`, read from `AsyncLocalStorage`.
+
+### Debugging with correlation IDs
+
+Every response carries an `X-Correlation-ID` header and a `correlationId` field in the body. When a user reports a problem, ask for the correlation ID, then grep the logs:
+
+```bash
+docker compose logs app | findstr <correlation-id>
+```
+
+Every log line emitted during that single request — middleware, service, DB query, exception — will share the same ID.
 
 ## Queue system
 
@@ -134,55 +144,139 @@ BullMQ on top of Redis, with four pre-registered queues:
 
 ## Health endpoint
 
-`GET /health` (version-neutral, outside the `/api/vN` prefix):
+`GET /health` (version-neutral, outside the `/api/vN` prefix). Returns the unified envelope wrapping a health report. Full example:
 
 ```json
 {
-  "status": "up",
-  "timestamp": "...",
-  "environment": "development",
-  "version": "0.2.0",
-  "uptimeSeconds": 42,
-  "memory": { "rssMb": 110.3, "heapTotalMb": 60.2, "heapUsedMb": 38.7, "externalMb": 2.1 },
-  "services": { "database": "up", "redis": "up" }
+  "success": true,
+  "statusCode": 200,
+  "message": "Health check succeeded",
+  "data": {
+    "status": "up",
+    "timestamp": "2026-05-16T20:07:18.895Z",
+    "environment": "development",
+    "version": "0.2.0",
+    "uptimeSeconds": 25,
+    "memory": {
+      "rssMb": 125.78,
+      "heapTotalMb": 40.43,
+      "heapUsedMb": 37.14,
+      "externalMb": 4.71
+    },
+    "services": {
+      "database": "up",
+      "redis": "up"
+    }
+  },
+  "timestamp": "2026-05-16T20:07:18.906Z",
+  "correlationId": "7e3a94d3-65bb-4dcc-a95f-cc2d3b6f57af"
 }
 ```
 
-Returns `200` even when components are `down` — the response body carries the verdict.
+Field meanings:
+
+| Field                     | Description                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| `data.status`             | Overall verdict. `"up"` only when all components are healthy.               |
+| `data.environment`        | `NODE_ENV` of the running process.                                          |
+| `data.version`            | App version from `package.json`.                                            |
+| `data.uptimeSeconds`      | Seconds since the Node process started. Resets on restart.                  |
+| `data.memory.rssMb`       | Resident Set Size — total physical RAM owned by this Node process.          |
+| `data.memory.heapTotalMb` | V8 heap reservation.                                                        |
+| `data.memory.heapUsedMb`  | V8 heap actually in use. Trends upward on leaks.                            |
+| `data.memory.externalMb`  | C++-bound memory (Buffers, native modules, socket queues).                  |
+| `data.services.database`  | Result of `PrismaService.isHealthy()` (runs `SELECT 1`).                    |
+| `data.services.redis`     | Result of `RedisService.isHealthy()` (runs `PING`, 1s timeout).             |
+
+The endpoint always returns HTTP `200` — the verdict is in the body. Use `data.status === "up"` for readiness probes.
 
 ## API versioning
 
 URI versioning is enabled globally with `API_DEFAULT_VERSION=1`. Routes registered under `@Controller('users')` are reachable at `/api/v1/users`. To pin a controller to a specific version: `@Controller({ path: 'users', version: '2' })`. `/health` is `VERSION_NEUTRAL`.
 
+## Environment variables
+
+All keys are validated with Joi at boot via [env.validation.ts](src/config/env.validation.ts) — invalid env fails fast with a clear error.
+
+| Group       | Key                          | Default                            | Required |
+| ----------- | ---------------------------- | ---------------------------------- | -------- |
+| App         | `NODE_ENV`                   | `development`                      | no       |
+| App         | `PORT`                       | `3000`                             | no       |
+| App         | `API_PREFIX`                 | `api`                              | no       |
+| App         | `API_DEFAULT_VERSION`        | `1`                                | no       |
+| App         | `CORS_ORIGIN`                | `*`                                | no       |
+| App         | `BODY_LIMIT`                 | `10mb`                             | no       |
+| Database    | `DATABASE_URL`               | —                                  | **yes**  |
+| Database    | `DATABASE_LOG_QUERIES`       | `false`                            | no       |
+| Redis       | `REDIS_HOST`                 | `localhost`                        | no       |
+| Redis       | `REDIS_PORT`                 | `6379`                             | no       |
+| Redis       | `REDIS_PASSWORD`             | empty                              | no       |
+| Redis       | `REDIS_DB`                   | `0`                                | no       |
+| JWT         | `JWT_ACCESS_SECRET`          | —                                  | **yes**  |
+| JWT         | `JWT_REFRESH_SECRET`         | —                                  | **yes**  |
+| JWT         | `JWT_ACCESS_EXPIRES_IN`      | `15m`                              | no       |
+| JWT         | `JWT_REFRESH_EXPIRES_IN`     | `7d`                               | no       |
+| Mail (SMTP) | `MAIL_HOST` ... `MAIL_FROM`  | sane defaults                      | no       |
+| Queue       | `QUEUE_PREFIX`               | `eap`                              | no       |
+| Queue       | `QUEUE_DEFAULT_ATTEMPTS`     | `3`                                | no       |
+| Queue       | `QUEUE_DEFAULT_BACKOFF_MS`   | `5000`                             | no       |
+| Throttle    | `THROTTLE_TTL_MS`            | `60000`                            | no       |
+| Throttle    | `THROTTLE_LIMIT`             | `100`                              | no       |
+| Swagger     | `SWAGGER_ENABLED`            | `true`                             | no       |
+| Swagger     | `SWAGGER_PATH`               | `api/docs`                         | no       |
+| Logger      | `LOG_LEVEL`                  | `debug`                            | no       |
+| Logger      | `LOG_PRETTY`                 | `true`                             | no       |
+
+Required keys must be set in `.env`. See [.env.example](.env.example) for the full template.
+
 ## Local setup
 
+Two valid workflows — pick whichever fits how you work. **Don't run both** (port conflict on 3000).
+
+### Workflow A — Everything in Docker
+
+Zero host setup beyond Docker Desktop. Slower file-watch on Windows.
+
 ```bash
-npm install
-cp .env.example .env
-
-# Bring up Postgres + Redis
-npm run docker:up
-
-# Apply schema + generate client
-npm run db:migrate
-
-# Start in watch mode (Pino pretty logs)
-npm run start:dev
+copy .env.example .env       # Windows;  cp on macOS/Linux
+npm run docker:up:build      # build + start app, postgres, redis
+npm run docker:logs          # follow logs
 ```
 
-URLs:
+The container runs `npm run start:dev` internally — code changes auto-reload via the mounted volume.
+
+### Workflow B — App on host, deps in Docker (recommended for daily dev)
+
+Faster watch, native debugging.
+
+```bash
+copy .env.example .env
+docker compose up -d postgres redis    # only the dependencies
+npm install                            # local node_modules for IDE + runtime
+npm run db:generate
+npm run db:migrate                     # create the placeholder schema
+npm run start:dev                      # app on host, hot reload
+```
+
+URLs (either workflow):
 
 - API: <http://localhost:3000/api/v1>
 - Swagger: <http://localhost:3000/api/docs>
 - Health: <http://localhost:3000/health>
 
-## Docker setup
+## Docker workflow
 
-```bash
-npm run docker:up:build   # full stack with rebuild
-npm run docker:logs       # follow logs
-npm run docker:down       # stop everything
-```
+| Command                          | What it does                                          |
+| -------------------------------- | ----------------------------------------------------- |
+| `npm run docker:up`              | Start all services in the background                  |
+| `npm run docker:up:build`        | Same, but rebuilds the app image first                |
+| `npm run docker:logs`            | Tail logs from all services                           |
+| `npm run docker:down`            | Stop and remove containers (volumes survive)          |
+| `docker compose down -v`         | Stop **and** wipe Postgres / Redis volumes            |
+| `docker compose ps`              | Show which containers are up + health                 |
+| `docker compose stop app`        | Stop just the app, keep deps running (for Workflow B) |
+
+Persistent data lives in named volumes `postgres-data` and `redis-data`.
 
 ## Scripts
 
@@ -194,9 +288,11 @@ npm run docker:down       # stop everything
 | `lint` / `lint:fix`             | ESLint                                        |
 | `format` / `format:check`       | Prettier                                      |
 | `type-check`                    | `tsc --noEmit`                                |
+| `test` / `test:watch` / `:cov`  | Jest                                          |
+| `test:e2e`                      | End-to-end Jest suite                         |
 | `docker:up` / `:down` / `:logs` | Docker compose orchestration                  |
-| `db:migrate` / `db:reset`       | Prisma dev migrate / reset                    |
-| `db:studio`                     | Prisma Studio                                 |
+| `db:migrate` / `db:reset`       | Prisma dev migrate / full reset               |
+| `db:studio`                     | Prisma Studio at <http://localhost:5555>      |
 | `db:generate`                   | Generate Prisma client                        |
 
 ## Development standards
@@ -206,6 +302,57 @@ npm run docker:down       # stop everything
 - **Husky pre-commit** runs `tsc --noEmit` + lint-staged (eslint --fix + prettier --write on `*.ts`).
 - **Path aliases**: `@common/*`, `@config/*`, `@infrastructure/*`, `@modules/*`, `@shared/*` (resolved by `tsc-alias` at build).
 - **No comments unless WHY is non-obvious.** Identifiers, types and tests are the documentation.
+
+## Troubleshooting
+
+### `EADDRINUSE: address already in use :::3000`
+
+Another process owns port 3000. Usually the Docker app container is still running while you tried `npm run start:dev`, or a previous Node process was orphaned by Ctrl+C without confirming `Y` to terminate the batch job.
+
+```bash
+npx kill-port 3000
+# or
+netstat -ano | findstr :3000
+taskkill /PID <pid> /F
+```
+
+### `P1001: Can't reach database server`
+
+Postgres isn't running, or `DATABASE_URL` doesn't match. Verify:
+
+```bash
+docker compose ps                         # is eap-postgres healthy?
+netstat -ano | findstr :5432              # is something listening?
+```
+
+If you're running a *local* Postgres (pgAdmin) instead of the Docker one, make sure `docker compose stop postgres` first — only one can bind 5432.
+
+### `Redis error (localhost:6379): ECONNREFUSED`
+
+Redis isn't running. The app will still boot but `/health` will report `redis: "down"`.
+
+```bash
+docker compose up -d redis
+```
+
+### Pre-commit hook fails on commit
+
+The hook runs `type-check` + `lint-staged`. Run them manually to see what's failing:
+
+```bash
+npm run type-check
+npm run lint
+```
+
+Fix issues, re-stage, and commit again. The hook can't be bypassed without `--no-verify`.
+
+### Swagger page is blank or times out
+
+Either `SWAGGER_ENABLED=false`, or the app crashed during startup. Check logs:
+
+```bash
+docker compose logs app | findstr ERROR
+```
 
 ## Roadmap (upcoming phases)
 
