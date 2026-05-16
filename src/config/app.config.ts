@@ -9,6 +9,7 @@ export interface AppConfig {
   apiDefaultVersion: string;
   corsOrigin: string;
   bodyLimit: string;
+  appUrl: string;
   isProduction: boolean;
   isDevelopment: boolean;
   isTest: boolean;
@@ -25,6 +26,7 @@ export default registerAs<AppConfig>(APP_CONFIG_KEY, () => {
     apiDefaultVersion: process.env.API_DEFAULT_VERSION ?? '1',
     corsOrigin: process.env.CORS_ORIGIN ?? '*',
     bodyLimit: process.env.BODY_LIMIT ?? '10mb',
+    appUrl: process.env.APP_URL ?? 'http://localhost:3000',
     isProduction: nodeEnv === 'production',
     isDevelopment: nodeEnv === 'development',
     isTest: nodeEnv === 'test',

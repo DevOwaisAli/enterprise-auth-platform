@@ -14,10 +14,6 @@ export interface SendMailOptions {
   bcc?: string | string[];
   replyTo?: string;
   attachments?: MailAttachment[];
-  template?: {
-    name: string;
-    context: Record<string, unknown>;
-  };
 }
 
 export interface SendMailResult {
@@ -25,3 +21,33 @@ export interface SendMailResult {
   accepted: string[];
   rejected: string[];
 }
+
+export enum MailJobType {
+  VERIFY_EMAIL = 'verify-email',
+  RESET_PASSWORD = 'reset-password',
+  PASSWORD_CHANGED = 'password-changed',
+}
+
+export interface VerifyEmailJobData {
+  to: string;
+  firstName: string | null;
+  verifyUrl: string;
+  expiresAt: string;
+}
+
+export interface ResetPasswordJobData {
+  to: string;
+  firstName: string | null;
+  resetUrl: string;
+  expiresAt: string;
+}
+
+export interface PasswordChangedJobData {
+  to: string;
+  firstName: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  changedAt: string;
+}
+
+export type MailJobData = VerifyEmailJobData | ResetPasswordJobData | PasswordChangedJobData;

@@ -4,6 +4,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { HttpExceptionFilter } from '@common/filters';
+import { JwtAuthGuard } from '@common/guards';
 import { TransformInterceptor } from '@common/interceptors';
 import { CorrelationIdMiddleware } from '@common/middleware';
 import { configurations, envValidationSchema } from '@config/index';
@@ -15,6 +16,7 @@ import { MailModule } from '@infrastructure/mail';
 import { QueueModule } from '@infrastructure/queue';
 import { RedisModule } from '@infrastructure/redis';
 import { AuditModule } from '@modules/audit';
+import { AuthModule } from '@modules/auth';
 import { HealthModule } from '@modules/health';
 
 @Module({
@@ -40,12 +42,14 @@ import { HealthModule } from '@modules/health';
     QueueModule,
     MailModule,
     AuditModule,
+    AuthModule,
     HealthModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],
 })
 export class AppModule implements NestModule {

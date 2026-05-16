@@ -3,7 +3,7 @@ import { type IncomingMessage, type ServerResponse } from 'node:http';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 import { CORRELATION_ID_HEADER } from '@common/constants';
 import { RequestContext } from '@common/utils/request-context';
@@ -36,7 +36,7 @@ import { type AppConfig, APP_CONFIG_KEY } from '@config/app.config';
             genReqId: (req: IncomingMessage, res: ServerResponse): string => {
               const incoming = req.headers[CORRELATION_ID_HEADER.toLowerCase()];
               const correlationId =
-                typeof incoming === 'string' && incoming.length > 0 ? incoming : uuidv4();
+                typeof incoming === 'string' && incoming.length > 0 ? incoming : uuidv7();
               res.setHeader(CORRELATION_ID_HEADER, correlationId);
               return correlationId;
             },
