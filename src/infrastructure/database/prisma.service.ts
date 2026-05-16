@@ -1,9 +1,36 @@
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { Prisma, PrismaClient } from '@prisma/client';
+
+import { type DatabaseConfig, DATABASE_CONFIG_KEY } from '@config/database.config';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+
+  constructor(configService: ConfigService) {
+    const config = configService.getOrThrow<DatabaseConfig>(DATABASE_CONFIG_KEY);
+    const log: Prisma.LogDefinition[] = config.logQueries
+      ? [
+          { level: 'query', emit: 'event' },
+          { level: 'warn', emit: 'event' },
+          { level: 'error', emit: 'event' },
+        ]
+      : [
+          { level: 'warn', emit: 'event' },
+          { level: 'error', emit: 'event' },
+        ];
+
+    super({ datasources: { db: { url: config.url } }, log });
+
+    if (config.logQueries) {
+      this.$on('query' as never, (event: Prisma.QueryEvent) => {
+        this.logger.debug(`${event.duration}ms ${event.query}`);
+      });
+    }
+    this.$on('warn' as never, (event: Prisma.LogEvent) => this.logger.warn(event.message));
+    this.$on('error' as never, (event: Prisma.LogEvent) => this.logger.error(event.message));
+  }
 
   async onModuleInit(): Promise<void> {
     try {

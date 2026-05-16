@@ -1,167 +1,223 @@
 # enterprise-auth-platform
 
-Enterprise-grade authentication and authorization platform built with NestJS, PostgreSQL, Redis, and a production-ready architecture. This repository currently contains the **foundation only** — authentication, RBAC, MFA, OAuth2, SAML SSO and multi-tenancy will be layered on top in subsequent tasks.
+Enterprise-grade authentication and authorization platform built on NestJS, PostgreSQL, Redis, BullMQ, and Pino. This repository currently contains the **foundation + core infrastructure** layers. Auth, RBAC, MFA, OAuth, SAML and multi-tenancy will be layered on top in subsequent phases.
 
 ## Tech stack
 
-| Concern          | Choice                                                          |
-| ---------------- | --------------------------------------------------------------- |
-| Runtime          | Node.js 22 (LTS) + TypeScript 5 (strict mode)                   |
-| Framework        | NestJS 11 (modular, DI, decorators)                             |
-| Database         | PostgreSQL 16 via Prisma ORM 6                                  |
-| Cache / KV       | Redis 7 via ioredis 5                                           |
-| Validation       | class-validator, class-transformer, Joi (env)                   |
-| Docs             | OpenAPI / Swagger (`@nestjs/swagger`) at `/api/docs`            |
-| Security         | helmet, compression, CORS, global validation pipe               |
-| Quality          | ESLint 9 (flat config), Prettier 3, Husky 9, lint-staged        |
-| Infra            | Docker + docker-compose (app, postgres, redis)                  |
+| Concern         | Choice                                                          |
+| --------------- | --------------------------------------------------------------- |
+| Runtime         | Node.js 22 (LTS) + TypeScript 5 (strict)                        |
+| Framework       | NestJS 11                                                       |
+| Database        | PostgreSQL 16 via Prisma 6                                      |
+| Cache / KV      | Redis 7 via ioredis 5                                           |
+| Queue           | BullMQ (Redis-backed) via `@nestjs/bullmq`                      |
+| Mail            | Nodemailer 6                                                    |
+| Logging         | Pino + `nestjs-pino` (JSON in prod, pretty in dev)              |
+| Validation      | class-validator, class-transformer, Joi (env)                   |
+| Rate limiting   | `@nestjs/throttler` (config-driven)                             |
+| API docs        | OpenAPI / Swagger at `/api/docs`                                |
+| Security        | helmet, compression, CORS, body-size limit, global validation   |
+| Quality         | ESLint 9 flat config, Prettier 3, Husky 9, lint-staged          |
+| Infra           | Docker + docker-compose (app, postgres, redis)                  |
 
 ## Architecture overview
 
 ```
 src/
-├── common/            # Cross-cutting: filters, interceptors, middleware, decorators, types
+├── common/
 │   ├── constants/
-│   ├── decorators/
-│   ├── dto/
+│   ├── decorators/        # @CorrelationId, @ResponseMessage
 │   ├── enums/
-│   ├── exceptions/    # AppException base class
-│   ├── filters/       # Global HTTP exception filter
-│   ├── guards/
-│   ├── interceptors/  # Response envelope transformer
-│   ├── middleware/    # Correlation IDs, request logger
-│   ├── pipes/
-│   ├── types/         # Shared API types
+│   ├── exceptions/        # AppException + typed subclasses
+│   ├── filters/           # Global HttpExceptionFilter (Prisma-aware)
+│   ├── interceptors/      # TransformInterceptor (response envelope)
+│   ├── middleware/        # CorrelationIdMiddleware (seeds AsyncLocalStorage)
+│   ├── types/             # ApiSuccessResponse / ApiErrorResponse / Pagination
 │   └── utils/
+│       └── request-context/   # AsyncLocalStorage store + IP / UA extractors
 │
-├── config/            # @nestjs/config + Joi validation, registered namespaces
+├── config/                # @nestjs/config + Joi
 │   ├── app.config.ts
 │   ├── database.config.ts
 │   ├── redis.config.ts
 │   ├── jwt.config.ts
+│   ├── mail.config.ts
+│   ├── queue.config.ts
+│   ├── swagger.config.ts
+│   ├── throttle.config.ts
 │   └── env.validation.ts
 │
-├── infrastructure/    # External system integrations
-│   ├── database/      # PrismaService, DatabaseModule
-│   ├── redis/         # ioredis provider, RedisService, RedisModule
-│   ├── logger/        # AppLoggerService
-│   ├── cache/         # (placeholder — caching strategy later)
-│   └── docker/        # (placeholder)
+├── infrastructure/        # External systems
+│   ├── database/          # PrismaService (query logging, soft-delete conventions)
+│   ├── redis/             # ioredis provider + RedisService (deduped logs)
+│   ├── cache/             # CacheService (get/set/delete/exists/ttl/getOrSet)
+│   ├── queue/             # BullMQ (email, audit, notification, security-alert)
+│   ├── mail/              # Nodemailer transporter + MailService
+│   └── logger/            # Pino module (transport, redaction, ALS-bound correlation)
 │
-├── modules/           # Feature modules
-│   └── health/        # GET /health → API / DB / Redis status
+├── modules/
+│   ├── audit/             # AuditService → queues structured events
+│   └── health/            # GET /health (memory, env, services)
 │
-├── shared/            # Reserved for cross-module shared kernel
-│
+├── shared/
 ├── app.module.ts
-└── main.ts            # Bootstrapping, Swagger, helmet, compression, global pipes
+└── main.ts                # Bootstrap, helmet, body limits, versioning, Swagger
 ```
 
-Architectural guarantees:
+## Request lifecycle
 
-- **Strict TS** — `strict`, `noImplicitAny`, `strictNullChecks`, `noUnusedLocals`, `noUnusedParameters`, `noUncheckedIndexedAccess` all on. Project compiles with zero TS errors.
-- **Config-driven** — no hardcoded secrets or hosts. Env is validated on boot via Joi; the app fails fast on invalid configuration.
-- **Path aliases** — `@common/*`, `@config/*`, `@infrastructure/*`, `@modules/*`, `@shared/*`.
-- **Global response envelope** — every successful response is wrapped as `{ success, data, meta }`. Every error is mapped to `{ success: false, error, meta }` by the global filter.
-- **Correlation IDs** — every request gets an `x-correlation-id` (echoed in responses) and is threaded into logs.
+1. **`CorrelationIdMiddleware`** reads `X-Correlation-ID` (or generates a UUID v4), sets it on the response header and into an `AsyncLocalStorage` store. The store also carries IP, user-agent and `startedAt`.
+2. **Pino `pinoHttp`** logs the request/response, automatically merging `correlationId` from the request context onto every log line.
+3. **Controllers** run inside the ALS context, so any code path can call `RequestContext.get()` without prop-drilling.
+4. **`TransformInterceptor`** wraps the controller's return value into the unified `ApiSuccessResponse` envelope (see below).
+5. **`HttpExceptionFilter`** catches anything thrown — application exceptions, NestJS HTTP exceptions, Prisma errors (P2002, P2025, P2003, ...) — and serializes them into the unified `ApiErrorResponse`.
 
-## Local setup (without Docker)
+## Unified API response envelope
 
-Prerequisites: Node.js 22+, npm 10+, a reachable PostgreSQL 16 and Redis 7.
+Success:
 
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Copy and edit env
-cp .env.example .env
-
-# 3. Generate Prisma client
-npm run prisma:generate
-
-# 4. Run migrations (creates the database schema)
-npm run prisma:migrate
-
-# 5. Start in watch mode
-npm run start:dev
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Success",
+  "data": { },
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "correlationId": "uuid-v4"
+}
 ```
 
-The API will be available at <http://localhost:3000/api>, Swagger UI at <http://localhost:3000/api/docs>, health at <http://localhost:3000/health>.
+Error:
 
-## Docker setup
-
-Spin up the full stack (app, PostgreSQL, Redis) with one command:
-
-```bash
-docker compose up --build
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errors": [{ "field": "email", "code": "isEmail", "message": "email must be an email" }],
+  "correlationId": "uuid-v4",
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "path": "/api/v1/users"
+}
 ```
 
-Services:
+Per-handler messages: `@ResponseMessage('User created')` on the controller method.
 
-| Service  | Image                | Host port |
-| -------- | -------------------- | --------- |
-| app      | (built from source)  | `3000`    |
-| postgres | `postgres:16-alpine` | `5432`    |
-| redis    | `redis:7-alpine`     | `6379`    |
+## Logging
 
-Data is persisted in named volumes (`postgres-data`, `redis-data`). The app container mounts source for hot reload via `nest start --watch`.
+Pino is wired as the app-wide Nest logger. In development with `LOG_PRETTY=true` you get colored single-line output; in production you get JSON ready for log shipping.
 
-## Available scripts
+- **Levels**: `fatal`, `error`, `warn`, `info`, `debug`, `trace`
+- **Redaction**: `Authorization` / `Cookie` headers, `password`, `*.token`, `*.secret` are auto-replaced with `[REDACTED]`.
+- **Correlation IDs** are attached to every line via `customProps`, read from `AsyncLocalStorage`.
 
-| Script                       | Purpose                                       |
-| ---------------------------- | --------------------------------------------- |
-| `npm run start:dev`          | Start the API in watch mode                   |
-| `npm run start:prod`         | Run the compiled app                          |
-| `npm run build`              | Compile TypeScript → `dist/`                  |
-| `npm run lint` / `lint:fix`  | ESLint                                        |
-| `npm run format` / `:check`  | Prettier write / check                        |
-| `npm run type-check`         | `tsc --noEmit`                                |
-| `npm run prisma:generate`    | Generate the Prisma client                    |
-| `npm run prisma:migrate`     | Create + apply a dev migration                |
-| `npm run prisma:studio`      | Open Prisma Studio                            |
-| `npm test`                   | Run unit tests (Jest)                         |
-| `npm run test:e2e`           | Run end-to-end tests                          |
+## Queue system
 
-## Quality gates
+BullMQ on top of Redis, with four pre-registered queues:
 
-- **Husky pre-commit hook** runs `tsc --noEmit` + `lint-staged` (ESLint + Prettier on staged `.ts`).
-- ESLint flat config enforces import ordering, no unused imports, consistent type imports, no floating promises.
-- Prettier formats with `singleQuote`, `trailingComma: all`, `printWidth: 100`.
+| Queue            | Purpose                                       |
+| ---------------- | --------------------------------------------- |
+| `email`          | Async outbound email                          |
+| `audit`          | Audit event persistence + downstream sinks    |
+| `notification`   | In-app / push / webhook notifications         |
+| `security-alert` | Suspicious-activity alerts, lockouts, etc.    |
+
+`QueueService.enqueue(name, jobName, payload, options?)` is the single entry point. Defaults: exponential backoff, 3 attempts, 1-hour retention on success, 24-hour retention on failure. Workers/processors are intentionally not wired yet — they come with each feature phase.
+
+## Cache abstraction
+
+`CacheService` over ioredis with JSON serialization. Methods: `get`, `set`, `delete`, `exists`, `ttl`, `expire`, `getOrSet`, plus `buildKey(namespace, ...parts)`. All operations are error-safe — a Redis outage logs a warning and falls through (`get` returns `null`, `set` returns `false`).
+
+## Audit foundation
+
+`AuditService.record({ action, resource, resourceId, status, metadata })` builds an `AuditEvent` from the current request context (actor IP / UA / userId / correlationId) and enqueues it on the `audit` queue. Actions are typed via the `AuditAction` enum (login.success, mfa.enabled, role.assigned, ...). Persistence to a Postgres audit table will arrive with the auth phase.
 
 ## Health endpoint
 
-`GET /health` returns:
+`GET /health` (version-neutral, outside the `/api/vN` prefix):
 
 ```json
 {
   "status": "up",
-  "timestamp": "2025-01-01T00:00:00.000Z",
+  "timestamp": "...",
+  "environment": "development",
+  "version": "0.2.0",
   "uptimeSeconds": 42,
-  "components": {
-    "api":      { "status": "up" },
-    "database": { "status": "up" },
-    "redis":    { "status": "up" }
-  }
+  "memory": { "rssMb": 110.3, "heapTotalMb": 60.2, "heapUsedMb": 38.7, "externalMb": 2.1 },
+  "services": { "database": "up", "redis": "up" }
 }
 ```
 
-`status` is `down` if any component is unhealthy.
+Returns `200` even when components are `down` — the response body carries the verdict.
 
-## Roadmap
+## API versioning
 
-The following will be added in subsequent tasks (foundation only in this commit):
+URI versioning is enabled globally with `API_DEFAULT_VERSION=1`. Routes registered under `@Controller('users')` are reachable at `/api/v1/users`. To pin a controller to a specific version: `@Controller({ path: 'users', version: '2' })`. `/health` is `VERSION_NEUTRAL`.
 
-- [ ] User, Role, Permission domain models (Prisma)
-- [ ] Password-based authentication + refresh tokens
-- [ ] RBAC guards and policy engine
+## Local setup
+
+```bash
+npm install
+cp .env.example .env
+
+# Bring up Postgres + Redis
+npm run docker:up
+
+# Apply schema + generate client
+npm run db:migrate
+
+# Start in watch mode (Pino pretty logs)
+npm run start:dev
+```
+
+URLs:
+
+- API: <http://localhost:3000/api/v1>
+- Swagger: <http://localhost:3000/api/docs>
+- Health: <http://localhost:3000/health>
+
+## Docker setup
+
+```bash
+npm run docker:up:build   # full stack with rebuild
+npm run docker:logs       # follow logs
+npm run docker:down       # stop everything
+```
+
+## Scripts
+
+| Script                          | Purpose                                       |
+| ------------------------------- | --------------------------------------------- |
+| `start:dev` / `start:debug`     | Watch / debug mode                            |
+| `start:prod`                    | Run compiled `dist/main`                      |
+| `build`                         | `nest build` + `tsc-alias` (path-alias fix)   |
+| `lint` / `lint:fix`             | ESLint                                        |
+| `format` / `format:check`       | Prettier                                      |
+| `type-check`                    | `tsc --noEmit`                                |
+| `docker:up` / `:down` / `:logs` | Docker compose orchestration                  |
+| `db:migrate` / `db:reset`       | Prisma dev migrate / reset                    |
+| `db:studio`                     | Prisma Studio                                 |
+| `db:generate`                   | Generate Prisma client                        |
+
+## Development standards
+
+- **Zero TS errors** with `strict + noUncheckedIndexedAccess + noUnusedLocals/Parameters`.
+- **ESLint clean** — no unused imports, alphabetized import groups, consistent type-imports, no floating promises.
+- **Husky pre-commit** runs `tsc --noEmit` + lint-staged (eslint --fix + prettier --write on `*.ts`).
+- **Path aliases**: `@common/*`, `@config/*`, `@infrastructure/*`, `@modules/*`, `@shared/*` (resolved by `tsc-alias` at build).
+- **No comments unless WHY is non-obvious.** Identifiers, types and tests are the documentation.
+
+## Roadmap (upcoming phases)
+
+- [ ] User / Role / Permission / Org domain models
+- [ ] Password-based auth + refresh token rotation
+- [ ] RBAC guards + policy engine
 - [ ] MFA (TOTP, recovery codes)
-- [ ] OAuth2 / OIDC providers
-- [ ] SAML SSO
-- [ ] Multi-tenancy (tenant isolation, per-tenant config)
-- [ ] Audit logging (DB + structured logs)
-- [ ] Rate limiting + brute-force protection
-- [ ] Session management + device fingerprinting
-- [ ] Production observability (OpenTelemetry, metrics)
+- [ ] OAuth2 / OIDC, SAML SSO
+- [ ] Multi-tenancy + tenant-scoped JWTs
+- [ ] Audit persistence + dashboards
+- [ ] Email templates + transactional flows
+- [ ] OpenTelemetry tracing + metrics
 
 ## License
 
