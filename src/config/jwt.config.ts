@@ -7,6 +7,8 @@ export interface JwtConfig {
   refreshSecret: string;
   accessExpiresIn: string;
   refreshExpiresIn: string;
+  issuer: string;
+  audience: string;
 }
 
 export default registerAs<JwtConfig>(JWT_CONFIG_KEY, () => ({
@@ -14,4 +16,6 @@ export default registerAs<JwtConfig>(JWT_CONFIG_KEY, () => ({
   refreshSecret: process.env.JWT_REFRESH_SECRET ?? '',
   accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
   refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  issuer: process.env.JWT_ISSUER ?? 'enterprise-auth-platform',
+  audience: process.env.JWT_AUDIENCE ?? 'enterprise-auth-platform-clients',
 }));

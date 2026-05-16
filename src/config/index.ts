@@ -1,4 +1,5 @@
 import appConfig from './app.config';
+import authConfig from './auth.config';
 import databaseConfig from './database.config';
 import jwtConfig from './jwt.config';
 import mailConfig from './mail.config';
@@ -8,6 +9,7 @@ import swaggerConfig from './swagger.config';
 import throttleConfig from './throttle.config';
 
 export * from './app.config';
+export * from './auth.config';
 export * from './database.config';
 export * from './env.validation';
 export * from './jwt.config';
@@ -19,6 +21,7 @@ export * from './throttle.config';
 
 export const configurations = [
   appConfig,
+  authConfig,
   databaseConfig,
   redisConfig,
   jwtConfig,

@@ -1,0 +1,55 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { UserStatus } from '@prisma/client';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+
+import { type AuthenticatedUser } from '@common/decorators/current-user.decorator';
+import { type JwtConfig, JWT_CONFIG_KEY } from '@config/jwt.config';
+import { PrismaService } from '@infrastructure/database';
+
+import { AUTH_ERROR_CODES, AUTH_STRATEGIES } from '../constants';
+import { type JwtAccessPayload } from '../interfaces';
+import { SessionService } from '../services/session.service';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy, AUTH_STRATEGIES.JWT) {
+  constructor(
+    configService: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly sessionService: SessionService,
+  ) {
+    const jwtConfig = configService.getOrThrow<JwtConfig>(JWT_CONFIG_KEY);
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: jwtConfig.accessSecret,
+      issuer: jwtConfig.issuer,
+      audience: jwtConfig.audience,
+    });
+  }
+
+  async validate(payload: JwtAccessPayload): Promise<AuthenticatedUser> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: payload.sub, deletedAt: null, status: UserStatus.ACTIVE },
+    });
+    if (!user) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.ACCOUNT_INACTIVE);
+    }
+    if (user.tokenVersion !== payload.tokenVersion) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.TOKEN_VERSION_MISMATCH);
+    }
+
+    const session = await this.sessionService.findSessionById(payload.sessionId);
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException(AUTH_ERROR_CODES.SESSION_REVOKED);
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      sessionId: session.id,
+      tokenVersion: user.tokenVersion,
+    };
+  }
+}

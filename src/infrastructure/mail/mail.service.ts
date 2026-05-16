@@ -5,7 +5,16 @@ import { type Transporter } from 'nodemailer';
 import { type MailConfig, MAIL_CONFIG_KEY } from '@config/mail.config';
 
 import { MAIL_TRANSPORTER } from './mail.constants';
-import { type SendMailOptions, type SendMailResult } from './mail.types';
+import {
+  type MailJobData,
+  MailJobType,
+  type PasswordChangedJobData,
+  type ResetPasswordJobData,
+  type SendMailOptions,
+  type SendMailResult,
+  type VerifyEmailJobData,
+} from './mail.types';
+import { renderPasswordChanged, renderResetPassword, renderVerifyEmail } from './templates';
 
 @Injectable()
 export class MailService {
@@ -20,7 +29,6 @@ export class MailService {
   }
 
   async sendMail(options: SendMailOptions): Promise<SendMailResult> {
-    const rendered = await this.renderTemplate(options);
     const info = await this.transporter.sendMail({
       from: `"${this.config.fromName}" <${this.config.from}>`,
       to: options.to,
@@ -28,8 +36,8 @@ export class MailService {
       bcc: options.bcc,
       replyTo: options.replyTo,
       subject: options.subject,
-      text: rendered.text ?? options.text,
-      html: rendered.html ?? options.html,
+      text: options.text,
+      html: options.html,
       attachments: options.attachments,
     });
 
@@ -44,12 +52,27 @@ export class MailService {
     };
   }
 
-  private async renderTemplate(
-    options: SendMailOptions,
-  ): Promise<{ html?: string; text?: string }> {
-    if (!options.template) {
-      return {};
+  async dispatch(type: MailJobType, data: MailJobData): Promise<SendMailResult> {
+    switch (type) {
+      case MailJobType.VERIFY_EMAIL: {
+        const payload = data as VerifyEmailJobData;
+        const rendered = renderVerifyEmail(payload);
+        return this.sendMail({ to: payload.to, ...rendered });
+      }
+      case MailJobType.RESET_PASSWORD: {
+        const payload = data as ResetPasswordJobData;
+        const rendered = renderResetPassword(payload);
+        return this.sendMail({ to: payload.to, ...rendered });
+      }
+      case MailJobType.PASSWORD_CHANGED: {
+        const payload = data as PasswordChangedJobData;
+        const rendered = renderPasswordChanged(payload);
+        return this.sendMail({ to: payload.to, ...rendered });
+      }
+      default: {
+        const exhaustiveCheck: never = type;
+        throw new Error(`Unknown mail job type: ${String(exhaustiveCheck)}`);
+      }
     }
-    return { html: options.html, text: options.text };
   }
 }
