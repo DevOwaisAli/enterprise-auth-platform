@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx jest *)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('postman/enterprise-auth-platform.postman_collection.json','utf8'\\)\\); console.log\\('collection OK'\\);\")",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('postman/enterprise-auth-platform.local.postman_environment.json','utf8'\\)\\); console.log\\('environment OK'\\);\")",
+      "Bash(npx --yes newman run postman/enterprise-auth-platform.postman_collection.json -e postman/enterprise-auth-platform.local.postman_environment.json --folder Health --timeout-request 2000)",
+      "Bash(npm run *)",
+      "Bash(node -e ' *)",
+      "Bash(npx newman *)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(curl -s -o NUL -w \"HTTP: %{http_code}\\\\n\" http://localhost:3000/health)"
+    ]
+  }
+}

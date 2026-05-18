@@ -26,6 +26,7 @@ export enum MailJobType {
   VERIFY_EMAIL = 'verify-email',
   RESET_PASSWORD = 'reset-password',
   PASSWORD_CHANGED = 'password-changed',
+  ORG_INVITATION = 'org-invitation',
 }
 
 export interface VerifyEmailJobData {
@@ -50,4 +51,15 @@ export interface PasswordChangedJobData {
   changedAt: string;
 }
 
-export type MailJobData = VerifyEmailJobData | ResetPasswordJobData | PasswordChangedJobData;
+export interface OrganizationInvitationJobData {
+  to: string;
+  organizationName: string;
+  acceptUrl: string;
+  expiresAt: string;
+}
+
+export type MailJobData =
+  | VerifyEmailJobData
+  | ResetPasswordJobData
+  | PasswordChangedJobData
+  | OrganizationInvitationJobData;

@@ -1,10 +1,10 @@
 {
   "name": "enterprise-auth-platform",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Enterprise-grade authentication and authorization platform built with NestJS, PostgreSQL, Redis, and production-ready architecture.",
-  "author": "",
+  "author": "Owais Ali",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build && tsc-alias",
@@ -30,6 +30,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
+    "db:seed": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
@@ -126,5 +127,8 @@
   },
   "lint-staged": {
     "*.ts": ["eslint --fix", "prettier --write"]
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }

@@ -15,6 +15,71 @@ enum UserStatus {
   LOCKED
 }
 
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OrganizationPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  REMOVED
+}
+
+enum PolicyEffect {
+  ALLOW
+  DENY
+}
+
+enum AttributeSource {
+  USER
+  MEMBERSHIP
+  RESOURCE
+  ORGANIZATION
+  REQUEST
+  ENVIRONMENT
+}
+
+enum PolicyOperator {
+  EQUALS
+  NOT_EQUALS
+  IN
+  NOT_IN
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  CONTAINS
+  STARTS_WITH
+  ENDS_WITH
+  EXISTS
+  REGEX_MATCH
+}
+
+enum AttributeValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  ARRAY
+  DATE
+  JSON
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 model HealthCheck {
   id        String    @id @default(uuid(7))
   service   String    @unique
@@ -42,11 +107,13 @@ model User {
   updatedAt           DateTime   @updatedAt
   deletedAt           DateTime?
 
-  sessions               Session[]
-  refreshTokens          RefreshToken[]
+  sessions                Session[]
+  refreshTokens           RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
-  passwordResetTokens    PasswordResetToken[]
-  passwordHistory        PasswordHistory[]
+  passwordResetTokens     PasswordResetToken[]
+  passwordHistory         PasswordHistory[]
+  memberships             Membership[]
+  policyAssignments       PolicyAssignment[]
 
   @@index([email])
   @@index([deletedAt])
@@ -77,16 +144,16 @@ model Session {
 }
 
 model RefreshToken {
-  id                  String    @id @default(uuid(7))
-  userId              String
-  sessionId           String
-  familyId            String
-  tokenHash           String    @unique
-  expiresAt           DateTime
-  revokedAt           DateTime?
-  replacedByTokenId   String?   @unique
-  reuseDetectedAt     DateTime?
-  createdAt           DateTime  @default(now())
+  id                String    @id @default(uuid(7))
+  userId            String
+  sessionId         String
+  familyId          String
+  tokenHash         String    @unique
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?   @unique
+  reuseDetectedAt   DateTime?
+  createdAt         DateTime  @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -135,4 +202,214 @@ model PasswordHistory {
 
   @@index([userId, createdAt])
   @@map("password_history")
+}
+
+model Organization {
+  id        String             @id @default(uuid(7))
+  name      String
+  slug      String             @unique
+  status    OrganizationStatus @default(ACTIVE)
+  plan      OrganizationPlan   @default(FREE)
+  settings  Json               @default("{}")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+
+  memberships       Membership[]
+  roles             Role[]
+  policies          Policy[]
+  policyAssignments PolicyAssignment[]
+  invitations       OrganizationInvitation[]
+
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("organizations")
+}
+
+model Membership {
+  id                  String           @id @default(uuid(7))
+  userId              String
+  organizationId      String
+  status              MembershipStatus @default(ACTIVE)
+  department          String?
+  region              String?
+  jobTitle            String?
+  clearanceLevel      Int              @default(0)
+  permissionsVersion  Int              @default(1)
+  attributesVersion   Int              @default(1)
+  joinedAt            DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  deletedAt           DateTime?
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userRoles    UserRole[]
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("memberships")
+}
+
+model Role {
+  id             String    @id @default(uuid(7))
+  organizationId String?
+  name           String
+  slug           String
+  description    String?
+  isSystem       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  organization      Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rolePermissions   RolePermission[]
+  userRoles         UserRole[]
+  policyAssignments PolicyAssignment[]
+  invitations       OrganizationInvitation[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([slug])
+  @@index([deletedAt])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid(7))
+  resource    String
+  action      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@index([resource])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid(7))
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  id           String   @id @default(uuid(7))
+  membershipId String
+  roleId       String
+  createdAt    DateTime @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, roleId])
+  @@index([membershipId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Policy {
+  id             String       @id @default(uuid(7))
+  organizationId String?
+  name           String
+  slug           String
+  description    String?
+  effect         PolicyEffect @default(ALLOW)
+  resource       String
+  action         String
+  priority       Int          @default(100)
+  isSystem       Boolean      @default(false)
+  isEnabled      Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  organization Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  conditions   PolicyCondition[]
+  assignments  PolicyAssignment[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([resource, action])
+  @@index([isEnabled])
+  @@index([deletedAt])
+  @@map("policies")
+}
+
+model PolicyCondition {
+  id              String             @id @default(uuid(7))
+  policyId        String
+  attributeSource AttributeSource
+  attributePath   String
+  operator        PolicyOperator
+  value           Json
+  valueType       AttributeValueType @default(STRING)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  policy Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@map("policy_conditions")
+}
+
+model PolicyAssignment {
+  id             String   @id @default(uuid(7))
+  policyId       String
+  roleId         String?
+  userId         String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  policy       Policy        @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  role         Role?         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@index([roleId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("policy_assignments")
+}
+
+model OrganizationInvitation {
+  id             String           @id @default(uuid(7))
+  organizationId String
+  email          String
+  roleId         String?
+  department     String?
+  region         String?
+  jobTitle       String?
+  clearanceLevel Int              @default(0)
+  tokenHash      String           @unique
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  role         Role?        @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([email])
+  @@index([status])
+  @@map("organization_invitations")
 }

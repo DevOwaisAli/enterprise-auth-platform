@@ -2,7 +2,7 @@
 
 Enterprise-grade authentication and authorization platform built on NestJS, PostgreSQL, Redis, BullMQ, and Pino.
 
-Current scope: foundation + core infrastructure + core authentication (register, email verification, login, JWT, refresh-token rotation with family-reuse detection, sessions, password reset, password change). RBAC, MFA, OAuth, SAML, and multi-tenancy are intentionally not implemented yet — see the [roadmap](#roadmap).
+Current scope: foundation + core infrastructure + core authentication + **organizations, RBAC, ABAC, tenant isolation, invitations**. MFA, OAuth, and SAML are intentionally not implemented yet — see the [roadmap](#roadmap).
 
 ## Quick start
 
@@ -14,6 +14,7 @@ docker compose up -d postgres redis
 npm install
 npm run db:generate
 npm run db:migrate
+npm run db:seed
 npm run start:dev
 ```
 
@@ -49,9 +50,11 @@ src/
 ├── config/          # @nestjs/config + Joi validation per concern
 ├── infrastructure/  # Database, Redis, Cache, Queue, Mail, Logger
 ├── modules/
-│   ├── audit/       # AuditService → audit BullMQ queue
-│   ├── auth/        # Register, login, JWT, refresh rotation, sessions, password flows
-│   └── health/      # GET /health (memory, env, services)
+│   ├── audit/         # AuditService → audit BullMQ queue
+│   ├── auth/          # Register, login, JWT, refresh rotation, sessions, password flows, switch-org
+│   ├── organizations/ # Organizations, memberships, invitations, tenant guard
+│   ├── authorization/ # RBAC roles + permissions, ABAC policies + engine, decorators + guards
+│   └── health/        # GET /health (memory, env, services)
 ├── app.module.ts
 └── main.ts
 ```
@@ -65,20 +68,23 @@ For deeper details, see [docs/architecture.md](docs/architecture.md).
 | [docs/architecture.md](docs/architecture.md)     | Layers, request lifecycle, response envelope, error model, AsyncLocalStorage, audit |
 | [docs/configuration.md](docs/configuration.md)   | Every env var, default, validation rule                                             |
 | [docs/auth.md](docs/auth.md)                     | Auth module: endpoints, password policy, JWT, refresh-token rotation, sessions      |
+| [docs/authorization.md](docs/authorization.md)   | RBAC + ABAC engine, policies, decorators, guards, tenant isolation, caching          |
 | [docs/infrastructure.md](docs/infrastructure.md) | Pino logger, cache abstraction, BullMQ queues, Nodemailer + templates, Prisma       |
 | [docs/operations.md](docs/operations.md)         | Docker workflow, npm scripts, deployment, troubleshooting                           |
 
 ## Roadmap
 
-- [ ] User profile + organization domain models
-- [ ] RBAC (Role / Permission / policy engine)
+- [x] User profile + organization domain models
+- [x] RBAC (Role / Permission)
+- [x] ABAC policy engine (resource/attribute conditions)
+- [x] Multi-tenancy + tenant-scoped JWTs
+- [x] Organization invitations
 - [ ] MFA (TOTP, recovery codes)
 - [ ] OAuth2 / OIDC providers
 - [ ] SAML SSO
-- [ ] Multi-tenancy + tenant-scoped JWTs
 - [ ] Audit persistence + admin dashboards
 - [ ] OpenTelemetry tracing + metrics
 
 ## License
 
-UNLICENSED — internal/private project.
+MIT — see [LICENSE](LICENSE). Free to use, modify, and distribute; just keep the copyright notice.

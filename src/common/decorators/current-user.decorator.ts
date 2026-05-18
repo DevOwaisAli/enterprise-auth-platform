@@ -5,6 +5,11 @@ export interface AuthenticatedUser {
   email: string;
   sessionId: string;
   tokenVersion: number;
+  organizationId: string | null;
+  membershipId: string | null;
+  roles: string[];
+  permissionsVersion: number;
+  attributesVersion: number;
 }
 
 export const CurrentUser = createParamDecorator(

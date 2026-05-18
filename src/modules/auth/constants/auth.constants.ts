@@ -17,14 +17,32 @@ export const AUTH_ERROR_CODES = {
   INVALID_VERIFICATION_TOKEN: 'INVALID_VERIFICATION_TOKEN',
   INVALID_RESET_TOKEN: 'INVALID_RESET_TOKEN',
   TOKEN_VERSION_MISMATCH: 'TOKEN_VERSION_MISMATCH',
+  MEMBERSHIP_INVALID: 'MEMBERSHIP_INVALID',
+  ORG_INACTIVE: 'ORG_INACTIVE',
+  PERMISSIONS_VERSION_MISMATCH: 'PERMISSIONS_VERSION_MISMATCH',
+  ATTRIBUTES_VERSION_MISMATCH: 'ATTRIBUTES_VERSION_MISMATCH',
+  ORG_NOT_FOUND: 'ORG_NOT_FOUND',
+  ORG_MEMBERSHIP_NOT_FOUND: 'ORG_MEMBERSHIP_NOT_FOUND',
+  INVALID_INVITATION_TOKEN: 'INVALID_INVITATION_TOKEN',
+  INVITATION_EXPIRED: 'INVITATION_EXPIRED',
+  INVITATION_ALREADY_USED: 'INVITATION_ALREADY_USED',
 } as const;
 
 export const AUTH_CACHE_KEYS = {
   blocklist: (tokenJti: string) => `auth:blocklist:${tokenJti}`,
   session: (sessionId: string) => `auth:session:${sessionId}`,
   userSessions: (userId: string) => `auth:user:${userId}:sessions`,
+  permissions: (userId: string, organizationId: string) =>
+    `permissions:user:${userId}:org:${organizationId}`,
+  policies: (userId: string, organizationId: string) =>
+    `policies:user:${userId}:org:${organizationId}`,
+  attributes: (userId: string, organizationId: string) =>
+    `attributes:user:${userId}:org:${organizationId}`,
 };
 
 export const REFRESH_TOKEN_BYTES = 48;
 export const VERIFICATION_TOKEN_BYTES = 32;
 export const RESET_TOKEN_BYTES = 32;
+export const INVITATION_TOKEN_BYTES = 32;
+
+export const AUTHZ_CACHE_TTL_SECONDS = 300;

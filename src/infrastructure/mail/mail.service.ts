@@ -8,13 +8,19 @@ import { MAIL_TRANSPORTER } from './mail.constants';
 import {
   type MailJobData,
   MailJobType,
+  type OrganizationInvitationJobData,
   type PasswordChangedJobData,
   type ResetPasswordJobData,
   type SendMailOptions,
   type SendMailResult,
   type VerifyEmailJobData,
 } from './mail.types';
-import { renderPasswordChanged, renderResetPassword, renderVerifyEmail } from './templates';
+import {
+  renderOrganizationInvitation,
+  renderPasswordChanged,
+  renderResetPassword,
+  renderVerifyEmail,
+} from './templates';
 
 @Injectable()
 export class MailService {
@@ -67,6 +73,11 @@ export class MailService {
       case MailJobType.PASSWORD_CHANGED: {
         const payload = data as PasswordChangedJobData;
         const rendered = renderPasswordChanged(payload);
+        return this.sendMail({ to: payload.to, ...rendered });
+      }
+      case MailJobType.ORG_INVITATION: {
+        const payload = data as OrganizationInvitationJobData;
+        const rendered = renderOrganizationInvitation(payload);
         return this.sendMail({ to: payload.to, ...rendered });
       }
       default: {

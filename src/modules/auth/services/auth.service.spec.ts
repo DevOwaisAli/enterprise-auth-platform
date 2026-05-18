@@ -11,6 +11,7 @@ import { AuditService } from '@modules/audit';
 
 import { AUTH_ERROR_CODES } from '../constants';
 
+import { ActiveContextService } from './active-context.service';
 import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
@@ -65,6 +66,7 @@ describe('AuthService', () => {
   let verification: Mock<VerificationService>;
   let audit: Mock<AuditService>;
   let queue: Mock<QueueService>;
+  let activeContext: Mock<ActiveContextService>;
 
   beforeEach(async () => {
     prisma = {
@@ -93,6 +95,14 @@ describe('AuthService', () => {
     ]);
     audit = makeMock<AuditService>(['record']);
     queue = makeMock<QueueService>(['enqueue', 'getQueue', 'getCounts']);
+    activeContext = makeMock<ActiveContextService>(['resolveDefault', 'resolveForOrganization']);
+    activeContext.resolveDefault.mockResolvedValue({
+      organizationId: null,
+      membershipId: null,
+      roles: [],
+      permissionsVersion: 0,
+      attributesVersion: 0,
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -104,6 +114,7 @@ describe('AuthService', () => {
         { provide: VerificationService, useValue: verification },
         { provide: AuditService, useValue: audit },
         { provide: QueueService, useValue: queue },
+        { provide: ActiveContextService, useValue: activeContext },
         {
           provide: ConfigService,
           useValue: {

@@ -17,7 +17,9 @@ import { QueueModule } from '@infrastructure/queue';
 import { RedisModule } from '@infrastructure/redis';
 import { AuditModule } from '@modules/audit';
 import { AuthModule } from '@modules/auth';
+import { AuthorizationModule } from '@modules/authorization';
 import { HealthModule } from '@modules/health';
+import { OrganizationsModule } from '@modules/organizations';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { HealthModule } from '@modules/health';
     MailModule,
     AuditModule,
     AuthModule,
+    OrganizationsModule,
+    AuthorizationModule,
     HealthModule,
   ],
   providers: [
