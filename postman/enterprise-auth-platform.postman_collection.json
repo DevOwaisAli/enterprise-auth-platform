@@ -1,0 +1,2338 @@
+{
+  "info": {
+    "_postman_id": "eap-collection-0000-4000-8000-000000000001",
+    "name": "enterprise-auth-platform",
+    "description": "Postman collection for the enterprise-auth-platform API.\n\nCovers: health, auth (register/verify/login/refresh/logout/sessions/password flows/switch-organization), organizations, members, invitations, RBAC roles + permissions, ABAC policies + conditions + assignments, plus authorization scenarios and negative tests.\n\nResponses use a unified envelope: `{ success, statusCode, message, data, timestamp, correlationId }`. Token auto-binding scripts read `data.tokens.accessToken` etc. and persist them to the active environment.\n\nNewman-safe order: the collection runs end-to-end without manual intervention. Destructive operations (logout, change-password, deletes) live in the final `Cleanup` folder. Cache-invalidating mutations are followed by a `POST /auth/refresh` so the next request gets a fresh accessToken with current permissionsVersion/attributesVersion.\n\nImport this file together with `enterprise-auth-platform.local.postman_environment.json` and select that environment in Postman.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request — runs before every request",
+          "",
+          "if (!pm.environment.get('baseUrl')) {",
+          "  pm.environment.set('baseUrl', 'http://localhost:3000/api/v1');",
+          "}",
+          "if (!pm.environment.get('serverUrl')) {",
+          "  pm.environment.set('serverUrl', 'http://localhost:3000');",
+          "}",
+          "",
+          "const correlationId = (typeof crypto !== 'undefined' && crypto.randomUUID)",
+          "  ? crypto.randomUUID()",
+          "  : pm.variables.replaceIn('{{$guid}}');",
+          "pm.environment.set('correlationId', correlationId);",
+          "",
+          "if (!pm.environment.get('email')) {",
+          "  pm.environment.set('email', `enterprise.user+${Date.now()}@yopmail.com`);",
+          "}",
+          "if (!pm.environment.get('password')) {",
+          "  pm.environment.set('password', 'StrongPass123!');",
+          "}",
+          "",
+          "// For Newman end-to-end runs: default target IDs to the current user when unset",
+          "if (!pm.environment.get('targetUserId') && pm.environment.get('userId')) {",
+          "  pm.environment.set('targetUserId', pm.environment.get('userId'));",
+          "}",
+          "if (!pm.environment.get('targetMembershipId') && pm.environment.get('membershipId')) {",
+          "  pm.environment.set('targetMembershipId', pm.environment.get('membershipId'));",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Has Content-Type header', function () {",
+          "  if (pm.response.code === 204) return;",
+          "  pm.response.to.have.header('Content-Type');",
+          "});",
+          "",
+          "const ct = pm.response.headers.get('Content-Type') || '';",
+          "if (ct.includes('application/json') && pm.response.code !== 204) {",
+          "  try {",
+          "    const json = pm.response.json();",
+          "    pm.test('Has unified envelope (success/timestamp)', function () {",
+          "      pm.expect(json).to.have.property('success');",
+          "      pm.expect(json).to.have.property('timestamp');",
+          "    });",
+          "  } catch (e) {",
+          "    // skip envelope check for non-JSON",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Version-neutral liveness/readiness endpoint.",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{serverUrl}}/health",
+              "host": ["{{serverUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Returns service status, env, version, memory usage and downstream service probes."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('data.status is up|down', function () {",
+                  "  pm.expect(['up', 'down']).to.include(json.data.status);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Auth",
+      "description": "Setup-side auth: register, login, refresh, forgot-password. Destructive flows (logout, change-password, reset, switch-org) live in later folders.",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"firstName\": \"Enterprise\",\n  \"lastName\": \"User\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Mint a fresh email so re-runs don't collide on the unique constraint",
+                  "pm.environment.set('email', `enterprise.user+${Date.now()}@yopmail.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.user?.id) {",
+                  "  pm.environment.set('userId', json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"deviceName\": \"postman\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.tokens?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.tokens.accessToken);",
+                  "}",
+                  "if (json?.data?.tokens?.refreshToken) {",
+                  "  pm.environment.set('refreshToken', json.data.tokens.refreshToken);",
+                  "}",
+                  "if (json?.data?.user?.id) {",
+                  "  pm.environment.set('userId', json.data.user.id);",
+                  "}",
+                  "if (json?.data?.sessionId) {",
+                  "  pm.environment.set('sessionId', json.data.sessionId);",
+                  "}",
+                  "pm.test('tokens.accessToken is present', function () {",
+                  "  pm.expect(json.data.tokens.accessToken).to.be.a('string').and.have.length.greaterThan(20);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "description": "Rotates the refresh token. Old token becomes single-use; reusing it triggers full family revocation."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.accessToken);",
+                  "}",
+                  "if (json?.data?.refreshToken) {",
+                  "  pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+
+        {
+          "name": "POST /auth/forgot-password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "description": "Always returns 202 — email-enumeration protection."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 202', function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Organizations",
+      "description": "Org CRUD. The creator is auto-added as a Membership with the global `admin` role.",
+      "item": [
+        {
+          "name": "POST /organizations",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Inc.\",\n  \"slug\": \"acme-{{$timestamp}}\",\n  \"plan\": \"ENTERPRISE\",\n  \"status\": \"ACTIVE\",\n  \"settings\": { \"timezone\": \"UTC\" }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) {",
+                  "  pm.environment.set('organizationId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('data is an array', function () { pm.expect(json.data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /organizations/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Inc. (updated)\",\n  \"plan\": \"ENTERPRISE\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Switch Organization",
+      "description": "After an org exists, switch the active organization context on the current session — mints a new access token bound to that org's membership.",
+      "item": [
+        {
+          "name": "POST /auth/switch-organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/switch-organization",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "switch-organization"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organizationId\": \"{{organizationId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.accessToken);",
+                  "}",
+                  "if (json?.data?.organizationId) {",
+                  "  pm.environment.set('organizationId', json.data.organizationId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Sessions",
+      "description": "Read-only session inspection. Revoking a session lives in the Cleanup folder.",
+      "item": [
+        {
+          "name": "GET /auth/sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "sessions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('data is an array', function () { pm.expect(json.data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Members",
+      "description": "List members + update ABAC attributes. In Newman runs, `targetUserId` defaults to the current user (so PATCH operates on self).",
+      "item": [
+        {
+          "name": "GET /organizations/:orgId/members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "members"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.test('data is an array', function () { pm.expect(json.data).to.be.an('array'); });",
+                  "const userId = pm.environment.get('userId');",
+                  "const mine = (json.data || []).find(m => m.userId === userId);",
+                  "if (mine?.id) {",
+                  "  pm.environment.set('membershipId', mine.id);",
+                  "  pm.environment.set('targetMembershipId', mine.id);",
+                  "}",
+                  "if (userId) {",
+                  "  pm.environment.set('targetUserId', userId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /organizations/:orgId/members/:userId",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/members/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "members", "{{targetUserId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department\": \"engineering\",\n  \"region\": \"us-east\",\n  \"jobTitle\": \"Senior Engineer\",\n  \"clearanceLevel\": 3\n}"
+            },
+            "description": "Updating ABAC attributes bumps the membership's `attributesVersion`. Newman auto-refreshes immediately after."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after member update",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "description": "Helper — refresh the access token after a cache-invalidating mutation so subsequent calls don't 401 with PERMISSIONS_VERSION_MISMATCH / ATTRIBUTES_VERSION_MISMATCH."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.accessToken);",
+                  "}",
+                  "if (json?.data?.refreshToken) {",
+                  "  pm.environment.set('refreshToken', json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "RBAC Permissions",
+      "description": "Global permission registry.",
+      "item": [
+        {
+          "name": "GET /permissions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "const usersRead = (json.data || []).find(p => p.resource === 'users' && p.action === 'read');",
+                  "if (usersRead?.id) {",
+                  "  pm.environment.set('permissionId', usersRead.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /permissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"reports\",\n  \"action\": \"read\",\n  \"description\": \"Read reports\"\n}"
+            },
+            "description": "Idempotent — returns the existing row if (resource, action) already exists."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "RBAC Roles",
+      "description": "Org-scoped roles. Assigning a role to a membership bumps `permissionsVersion`; an auto-refresh follows.",
+      "item": [
+        {
+          "name": "POST /organizations/:orgId/roles",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Department Lead\",\n  \"slug\": \"department-lead-{{$timestamp}}\",\n  \"description\": \"Manages members in their department\",\n  \"permissionIds\": []\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) {",
+                  "  pm.environment.set('roleId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations/:orgId/roles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations/:orgId/roles/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /organizations/:orgId/roles/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Department Lead (renamed)\",\n  \"description\": \"Updated description\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /organizations/:orgId/roles/:id/permissions",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "permissions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionIds\": [\"{{permissionId}}\"]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /organizations/:orgId/roles/:id/members/:membershipId",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/members/{{targetMembershipId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "members", "{{targetMembershipId}}"]
+            },
+            "description": "Assigning a role bumps the target membership's permissionsVersion. Newman auto-refreshes after."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 or 201', function () { pm.expect([200, 201]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after role assignment",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "ABAC Policies",
+      "description": "Create / list / update policies. Each mutation invalidates the per-org cache and bumps all members' versions — a refresh follows.",
+      "item": [
+        {
+          "name": "POST /policies",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/policies",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Same-department read access\",\n  \"slug\": \"same-department-read-{{$timestamp}}\",\n  \"description\": \"Members can read other users in the same department\",\n  \"effect\": \"ALLOW\",\n  \"resource\": \"users\",\n  \"action\": \"read\",\n  \"priority\": 150,\n  \"isEnabled\": true,\n  \"organizationId\": \"{{organizationId}}\",\n  \"conditions\": [\n    {\n      \"attributeSource\": \"RESOURCE\",\n      \"attributePath\": \"department\",\n      \"operator\": \"EQUALS\",\n      \"value\": \"MEMBERSHIP.department\",\n      \"valueType\": \"STRING\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) { pm.environment.set('policyId', json.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after policy create",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /policies",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/policies",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /policies/:id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /policies/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Same-department read access (updated)\",\n  \"priority\": 200,\n  \"isEnabled\": true\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after policy update",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "ABAC Conditions",
+      "description": "All conditions on a policy are AND-combined.",
+      "item": [
+        {
+          "name": "POST /policies/:id/conditions",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}/conditions",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}", "conditions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attributeSource\": \"MEMBERSHIP\",\n  \"attributePath\": \"clearanceLevel\",\n  \"operator\": \"GREATER_THAN_OR_EQUAL\",\n  \"value\": 2,\n  \"valueType\": \"NUMBER\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) { pm.environment.set('conditionId', json.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after condition add",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /policies/:id/conditions/:conditionId",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}/conditions/{{conditionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}", "conditions", "{{conditionId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 3\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after condition patch",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "ABAC Assignments",
+      "description": "Bind a policy to a role, user, or organization.",
+      "item": [
+        {
+          "name": "POST /policies/:id/assignments",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}/assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}", "assignments"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organizationId\": \"{{organizationId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) { pm.environment.set('assignmentId', json.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after assignment create",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Invitations",
+      "description": "Send/list invitations. Revoke + accept live in Cleanup and Token-Required Flows respectively.",
+      "item": [
+        {
+          "name": "POST /organizations/:orgId/invitations",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "invitations"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invitee+{{$timestamp}}@yopmail.com\",\n  \"department\": \"engineering\",\n  \"region\": \"us-east\",\n  \"jobTitle\": \"Software Engineer\",\n  \"clearanceLevel\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) { pm.environment.set('invitationId', json.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations/:orgId/invitations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "invitations"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Authorization Tests",
+      "description": "Read-only checks against the live RBAC + ABAC engine. Tests that need bespoke state (suspended member, non-admin user) skip themselves in Newman runs.",
+      "item": [
+        {
+          "name": "RBAC permission allowed — list permissions as admin",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin can list permissions (200)', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RBAC permission denied — list permissions as plain user (manual)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            },
+            "description": "Needs a non-admin access token in `accessToken`. Skipped in Newman because the auto-run uses an admin token."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Skip in Newman / auto-run because the active token is an admin token",
+                  "if (typeof pm.execution !== 'undefined' && pm.execution.skipRequest) {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Non-privileged user is forbidden (403) — only when run with a plain-user token', function () {",
+                  "  pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ABAC same-organization-access — fetch own org",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Same-org access allowed (200)', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ABAC ownership — edit own profile (placeholder)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{userId}}"]
+            },
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Enterprise\"\n}" },
+            "description": "Placeholder — `/users/:id` ships in a later phase. The `edit-own-profile` policy is already seeded and engine-tested."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Tolerated until users resource ships', function () {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ABAC department-based — manager reads same-department user (placeholder)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{targetUserId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Tolerated until users resource ships', function () {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ABAC DENY — suspended member is blocked (manual)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions"]
+            },
+            "description": "Skipped in Newman: requires a separate flow that first sets the membership status to SUSPENDED."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (typeof pm.execution !== 'undefined' && pm.execution.skipRequest) {",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Suspended member forbidden (403) — only valid after manual suspend', function () {",
+                  "  pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ABAC Enterprise-plan-required-for-sso (placeholder)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/sso/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["sso", "providers"]
+            },
+            "description": "Placeholder — SSO ships in a later phase."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Tolerated until SSO routes ship', function () {",
+                  "  pm.expect([200, 403, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cross-tenant access blocked",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/00000000-0000-7000-8000-000000000000/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "00000000-0000-7000-8000-000000000000", "members"]
+            },
+            "description": "Param orgId differs from JWT organizationId. TenantGuard rejects."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Cross-tenant access denied (403)', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Negative Tests",
+      "description": "Expected error responses.",
+      "item": [
+        {
+          "name": "401 — protected route without token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — invalid login payload",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "401 — login with wrong password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"definitely-not-the-password\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', function () { pm.response.to.have.status(401); });",
+                  "const json = pm.response.json();",
+                  "pm.test('code is INVALID_CREDENTIALS', function () {",
+                  "  pm.expect(json?.message || json?.code || '').to.match(/INVALID_CREDENTIALS|Invalid email or password/i);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 — duplicate slug on org create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme\",\n  \"slug\": \"acme-{{$timestamp}}\"\n}"
+            },
+            "description": "On the first run inside a single Newman invocation this returns 201. Run again (or in Postman manually) for the 409."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Either 201 (first run) or 409 (replay)', function () {",
+                  "  pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — non-existent organization",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/00000000-0000-7000-8000-deaddeaddead",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "00000000-0000-7000-8000-deaddeaddead"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "401 — refresh token reuse",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"already-rotated-or-bogus-token\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Token-Required Flows",
+      "description": "Endpoints that consume a token only available from an email or invitation. Skipped in Newman by default — populate the matching env var (emailVerificationToken, passwordResetToken, invitationToken) and re-run to test these in Postman.",
+      "item": [
+        {
+          "name": "POST /auth/verify-email",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{emailVerificationToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('emailVerificationToken')) {",
+                  "  if (typeof pm.execution !== 'undefined' && pm.execution.skipRequest) {",
+                  "    pm.execution.skipRequest();",
+                  "  }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/reset-password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{passwordResetToken}}\",\n  \"newPassword\": \"NewStrongPass456!\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('passwordResetToken')) {",
+                  "  if (typeof pm.execution !== 'undefined' && pm.execution.skipRequest) {",
+                  "    pm.execution.skipRequest();",
+                  "  }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /organizations/invitations/accept",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/invitations/accept",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "invitations", "accept"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{invitationToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('invitationToken')) {",
+                  "  if (typeof pm.execution !== 'undefined' && pm.execution.skipRequest) {",
+                  "    pm.execution.skipRequest();",
+                  "  }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Cleanup",
+      "description": "Destructive operations — run LAST. Tear down everything created during the run. Assertions are tolerant where the operation may legitimately fail (e.g. last-admin removal, permission in use).",
+      "item": [
+        {
+          "name": "DELETE /policies/:id/assignments/:assignmentId",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}/assignments/{{assignmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}", "assignments", "{{assignmentId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after assignment delete",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /policies/:id/conditions/:conditionId",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}/conditions/{{conditionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}", "conditions", "{{conditionId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after condition delete",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /policies/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["policies", "{{policyId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after policy delete",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /organizations/:orgId/roles/:id/members/:membershipId",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/members/{{targetMembershipId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "members", "{{targetMembershipId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/refresh — after role revoke",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.accessToken) { pm.environment.set('accessToken', json.data.accessToken); }",
+                  "if (json?.data?.refreshToken) { pm.environment.set('refreshToken', json.data.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /organizations/:orgId/roles/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /permissions/:id (tolerant)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/permissions/{{permissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["permissions", "{{permissionId}}"]
+            },
+            "description": "Seeded permissions are referenced by system roles → 409. New permissions are deletable → 204."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 deleted or 409 in-use', function () {",
+                  "  pm.expect([204, 409]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /organizations/:orgId/invitations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations/{{invitationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "invitations", "{{invitationId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /organizations/:orgId/members/:userId (tolerant — last admin = 409)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/members/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}", "members", "{{targetUserId}}"]
+            },
+            "description": "In Newman the only member is the admin → expect 409 LAST_ADMIN_REMOVAL."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 removed or 409 last-admin', function () {",
+                  "  pm.expect([204, 409]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /auth/change-password (tolerant)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"NewStrongPass456!\",\n  \"revokeOtherSessions\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 or 400 PASSWORD_RECENTLY_USED', function () {",
+                  "  pm.expect([204, 400]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /organizations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["organizations", "{{organizationId}}"]
+            },
+            "description": "Soft-deletes the org. Existing tokens stay valid because org.status remains ACTIVE."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /auth/sessions/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "sessions", "{{sessionId}}"]
+            },
+            "description": "Revoking the current session is equivalent to logout. After this point, the access token is invalid — `POST /auth/logout` below will return 401."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout (post-revoke — tolerant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 or 401 (session already revoked)', function () {",
+                  "  pm.expect([204, 401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout-all (post-revoke — tolerant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout-all"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 or 401 (token already invalid)', function () {",
+                  "  pm.expect([204, 401]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

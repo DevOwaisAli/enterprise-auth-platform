@@ -4,6 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 
 import { AuthController } from './controllers/auth.controller';
 import { SessionController } from './controllers/session.controller';
+import { ActiveContextService } from './services/active-context.service';
 import { AuthService } from './services/auth.service';
 import { PasswordService } from './services/password.service';
 import { SessionService } from './services/session.service';
@@ -20,8 +21,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     SessionService,
     TokenService,
     VerificationService,
+    ActiveContextService,
     JwtStrategy,
   ],
-  exports: [AuthService, TokenService, SessionService],
+  exports: [AuthService, TokenService, SessionService, ActiveContextService],
 })
 export class AuthModule {}

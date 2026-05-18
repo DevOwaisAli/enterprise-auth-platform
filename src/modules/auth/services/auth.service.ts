@@ -17,8 +17,9 @@ import { QUEUE_NAMES, QueueService } from '@infrastructure/queue';
 import { AuditAction, AuditResource, AuditService } from '@modules/audit';
 
 import { AUTH_ERROR_CODES } from '../constants';
-import { type LoginMetadata, type TokenPair } from '../interfaces';
+import { type JwtAccessPayload, type LoginMetadata, type TokenPair } from '../interfaces';
 
+import { ActiveContextService } from './active-context.service';
 import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
@@ -76,6 +77,7 @@ export class AuthService {
     private readonly verificationService: VerificationService,
     private readonly auditService: AuditService,
     private readonly queueService: QueueService,
+    private readonly activeContextService: ActiveContextService,
     configService: ConfigService,
   ) {
     this.authConfig = configService.getOrThrow<AuthConfig>(AUTH_CONFIG_KEY);
@@ -175,12 +177,10 @@ export class AuthService {
       return this.sessionService.createSession(user.id, metadata, tx);
     });
 
-    const accessToken = await this.tokenService.signAccessToken({
-      sub: user.id,
-      email: user.email,
-      sessionId: created.session.id,
-      tokenVersion: user.tokenVersion,
-    });
+    const orgCtx = await this.activeContextService.resolveDefault(user.id);
+    const accessToken = await this.tokenService.signAccessToken(
+      this.buildAccessPayload(user, created.session.id, orgCtx),
+    );
 
     await this.auditService.record({
       action: AuditAction.LOGIN_SUCCESS,
@@ -212,18 +212,67 @@ export class AuthService {
       });
     }
 
-    const accessToken = await this.tokenService.signAccessToken({
-      sub: user.id,
-      email: user.email,
-      sessionId: rotated.session.id,
-      tokenVersion: user.tokenVersion,
-    });
+    const orgCtx = await this.activeContextService.resolveDefault(user.id);
+    const accessToken = await this.tokenService.signAccessToken(
+      this.buildAccessPayload(user, rotated.session.id, orgCtx),
+    );
 
     return {
       accessToken,
       refreshToken: rotated.refreshToken,
       accessTokenExpiresAt: this.computeAccessTokenExpiry(),
       refreshTokenExpiresAt: rotated.refreshTokenExpiresAt,
+    };
+  }
+
+  async switchOrganization(
+    userId: string,
+    sessionId: string,
+    organizationId: string,
+  ): Promise<{ accessToken: string; expiresAt: Date }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt || user.status !== UserStatus.ACTIVE) {
+      throw new AppException({
+        code: AUTH_ERROR_CODES.ACCOUNT_INACTIVE,
+        message: 'Account is not active',
+        status: 403,
+      });
+    }
+    const orgCtx = await this.activeContextService.resolveForOrganization(userId, organizationId);
+    if (!orgCtx) {
+      throw new AppException({
+        code: AUTH_ERROR_CODES.ORG_MEMBERSHIP_NOT_FOUND,
+        message: 'Active membership not found for organization',
+        status: 403,
+      });
+    }
+    const accessToken = await this.tokenService.signAccessToken(
+      this.buildAccessPayload(user, sessionId, orgCtx),
+    );
+    return { accessToken, expiresAt: this.computeAccessTokenExpiry() };
+  }
+
+  private buildAccessPayload(
+    user: User,
+    sessionId: string,
+    orgCtx: {
+      organizationId: string | null;
+      membershipId: string | null;
+      roles: string[];
+      permissionsVersion: number;
+      attributesVersion: number;
+    },
+  ): JwtAccessPayload {
+    return {
+      sub: user.id,
+      email: user.email,
+      sessionId,
+      tokenVersion: user.tokenVersion,
+      organizationId: orgCtx.organizationId,
+      membershipId: orgCtx.membershipId,
+      roles: orgCtx.roles,
+      permissionsVersion: orgCtx.permissionsVersion,
+      attributesVersion: orgCtx.attributesVersion,
     };
   }
 

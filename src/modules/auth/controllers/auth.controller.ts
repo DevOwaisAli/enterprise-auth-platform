@@ -17,6 +17,8 @@ import {
   RegisterDto,
   RegisterResponseDto,
   ResetPasswordDto,
+  SwitchOrganizationDto,
+  SwitchOrganizationResponseDto,
   VerifyEmailDto,
 } from '../dto';
 import { type LoginMetadata } from '../interfaces';
@@ -136,6 +138,29 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ success: true }> {
     await this.authService.resetPassword({ token: dto.token, newPassword: dto.newPassword });
     return { success: true };
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('switch-organization')
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage('Active organization switched')
+  @ApiOperation({ summary: 'Switch the active organization context on the current session' })
+  @ApiResponse({ status: 200, type: SwitchOrganizationResponseDto })
+  async switchOrganization(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SwitchOrganizationDto,
+  ): Promise<SwitchOrganizationResponseDto> {
+    const result = await this.authService.switchOrganization(
+      user.id,
+      user.sessionId,
+      dto.organizationId,
+    );
+    return {
+      accessToken: result.accessToken,
+      expiresAt: result.expiresAt,
+      organizationId: dto.organizationId,
+    };
   }
 
   private buildMetadata(req: Request, deviceName?: string): LoginMetadata {
