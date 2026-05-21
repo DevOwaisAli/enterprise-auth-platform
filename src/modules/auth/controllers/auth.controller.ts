@@ -13,6 +13,7 @@ import {
   ForgotPasswordDto,
   LoginDto,
   LoginResponseDto,
+  MfaChallengeRequiredResponseDto,
   RefreshDto,
   RegisterDto,
   RegisterResponseDto,
@@ -59,14 +60,27 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ResponseMessage('Login successful')
-  @ApiOperation({ summary: 'Authenticate with email + password' })
+  @ApiOperation({
+    summary: 'Authenticate with email + password (may return an MFA challenge)',
+  })
   @ApiResponse({ status: 200, type: LoginResponseDto })
-  async login(@Body() dto: LoginDto, @Req() req: Request): Promise<LoginResponseDto> {
+  @ApiResponse({
+    status: 200,
+    description: 'MFA challenge required',
+    type: MfaChallengeRequiredResponseDto,
+  })
+  async login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+  ): Promise<LoginResponseDto | MfaChallengeRequiredResponseDto> {
     const metadata = this.buildMetadata(req, dto.deviceName);
     const result = await this.authService.login(
       { email: dto.email, password: dto.password },
       metadata,
     );
+    if ('mfaRequired' in result) {
+      return result;
+    }
     return {
       user: result.user as LoginResponseDto['user'],
       tokens: result.tokens,

@@ -13,6 +13,7 @@ import { AUTH_ERROR_CODES } from '../constants';
 
 import { ActiveContextService } from './active-context.service';
 import { AuthService } from './auth.service';
+import { LoginHooksService } from './login-hooks.service';
 import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
@@ -67,6 +68,7 @@ describe('AuthService', () => {
   let audit: Mock<AuditService>;
   let queue: Mock<QueueService>;
   let activeContext: Mock<ActiveContextService>;
+  let loginHooks: Mock<LoginHooksService>;
 
   beforeEach(async () => {
     prisma = {
@@ -103,6 +105,14 @@ describe('AuthService', () => {
       permissionsVersion: 0,
       attributesVersion: 0,
     });
+    loginHooks = makeMock<LoginHooksService>([
+      'registerMfaHook',
+      'registerSsoEnforcement',
+      'checkSsoEnforcement',
+      'checkMfa',
+    ]);
+    loginHooks.checkSsoEnforcement.mockResolvedValue({ blocked: false });
+    loginHooks.checkMfa.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -115,6 +125,7 @@ describe('AuthService', () => {
         { provide: AuditService, useValue: audit },
         { provide: QueueService, useValue: queue },
         { provide: ActiveContextService, useValue: activeContext },
+        { provide: LoginHooksService, useValue: loginHooks },
         {
           provide: ConfigService,
           useValue: {
@@ -241,6 +252,9 @@ describe('AuthService', () => {
         { ipAddress: '1.1.1.1' },
       );
 
+      if ('mfaRequired' in result) {
+        throw new Error('expected token result, got MFA challenge');
+      }
       expect(result.tokens.accessToken).toBe('at');
       expect(result.tokens.refreshToken).toBe('rt');
       expect(result.sessionId).toBe('s1');

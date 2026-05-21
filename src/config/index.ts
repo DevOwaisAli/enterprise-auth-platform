@@ -1,6 +1,7 @@
 import appConfig from './app.config';
 import authConfig from './auth.config';
 import databaseConfig from './database.config';
+import federationConfig from './federation.config';
 import jwtConfig from './jwt.config';
 import mailConfig from './mail.config';
 import queueConfig from './queue.config';
@@ -12,6 +13,7 @@ export * from './app.config';
 export * from './auth.config';
 export * from './database.config';
 export * from './env.validation';
+export * from './federation.config';
 export * from './jwt.config';
 export * from './mail.config';
 export * from './queue.config';
@@ -29,4 +31,5 @@ export const configurations = [
   queueConfig,
   swaggerConfig,
   throttleConfig,
+  federationConfig,
 ];

@@ -20,6 +20,7 @@ import { AUTH_ERROR_CODES } from '../constants';
 import { type JwtAccessPayload, type LoginMetadata, type TokenPair } from '../interfaces';
 
 import { ActiveContextService } from './active-context.service';
+import { LoginHooksService, type MfaChallengeRequired } from './login-hooks.service';
 import { PasswordService } from './password.service';
 import { SessionService } from './session.service';
 import { TokenService } from './token.service';
@@ -48,6 +49,8 @@ export interface LoginResult {
   tokens: TokenPair;
   sessionId: string;
 }
+
+export type LoginOutcome = LoginResult | MfaChallengeRequired;
 
 export type SafeUser = Omit<User, 'passwordHash'>;
 
@@ -78,6 +81,7 @@ export class AuthService {
     private readonly auditService: AuditService,
     private readonly queueService: QueueService,
     private readonly activeContextService: ActiveContextService,
+    private readonly loginHooks: LoginHooksService,
     configService: ConfigService,
   ) {
     this.authConfig = configService.getOrThrow<AuthConfig>(AUTH_CONFIG_KEY);
@@ -135,7 +139,7 @@ export class AuthService {
     return this.verificationService.consumeEmailVerificationToken(token);
   }
 
-  async login(input: LoginInput, metadata: LoginMetadata): Promise<LoginResult> {
+  async login(input: LoginInput, metadata: LoginMetadata): Promise<LoginOutcome> {
     const normalizedEmail = input.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
 
@@ -159,10 +163,38 @@ export class AuthService {
       });
     }
 
+    const ssoCheck = await this.loginHooks.checkSsoEnforcement(user);
+    if (ssoCheck.blocked) {
+      await this.auditService.record({
+        action: AuditAction.LOGIN_FAILURE,
+        resource: AuditResource.USER,
+        resourceId: user.id,
+        status: 'failure',
+        actor: { userId: user.id, email: user.email },
+        metadata: { reason: ssoCheck.reason ?? 'sso_only_enforced' },
+      });
+      throw new AppException({
+        code: 'SSO_ONLY_ENFORCED',
+        message:
+          ssoCheck.reason ??
+          'Your organization requires SSO login. Please use the SSO portal to sign in.',
+        status: 403,
+      });
+    }
+
     const matches = await this.passwordService.compare(input.password, user.passwordHash);
     if (!matches) {
       await this.handleFailedLogin(user);
       throw this.invalidCredentials();
+    }
+
+    const mfaChallenge = await this.loginHooks.checkMfa(user, metadata);
+    if (mfaChallenge) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockUntil: null },
+      });
+      return mfaChallenge;
     }
 
     const created = await this.prisma.$transaction(async (tx) => {

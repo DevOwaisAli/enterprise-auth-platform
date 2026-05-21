@@ -19,7 +19,10 @@ import { AuditModule } from '@modules/audit';
 import { AuthModule } from '@modules/auth';
 import { AuthorizationModule } from '@modules/authorization';
 import { HealthModule } from '@modules/health';
+import { MfaModule } from '@modules/mfa';
+import { OAuthModule } from '@modules/oauth';
 import { OrganizationsModule } from '@modules/organizations';
+import { SsoModule } from '@modules/sso';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { OrganizationsModule } from '@modules/organizations';
     AuthModule,
     OrganizationsModule,
     AuthorizationModule,
+    MfaModule,
+    OAuthModule,
+    SsoModule,
     HealthModule,
   ],
   providers: [

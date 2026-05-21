@@ -6,6 +6,7 @@ import { AuthController } from './controllers/auth.controller';
 import { SessionController } from './controllers/session.controller';
 import { ActiveContextService } from './services/active-context.service';
 import { AuthService } from './services/auth.service';
+import { LoginHooksService } from './services/login-hooks.service';
 import { PasswordService } from './services/password.service';
 import { SessionService } from './services/session.service';
 import { TokenService } from './services/token.service';
@@ -22,8 +23,16 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     TokenService,
     VerificationService,
     ActiveContextService,
+    LoginHooksService,
     JwtStrategy,
   ],
-  exports: [AuthService, TokenService, SessionService, ActiveContextService],
+  exports: [
+    AuthService,
+    TokenService,
+    SessionService,
+    ActiveContextService,
+    LoginHooksService,
+    PasswordService,
+  ],
 })
 export class AuthModule {}

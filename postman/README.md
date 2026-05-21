@@ -42,8 +42,15 @@ The collection is grouped into folders, but for a full end-to-end run, follow th
 13. **ABAC Conditions → POST /policies/:id/conditions** — saves `conditionId`.
 14. **ABAC Assignments → POST /policies/:id/assignments** — saves `assignmentId`.
 15. **Authorization Tests** — run the whole folder; passes/failures map directly to RBAC + ABAC behaviour.
-16. **Auth → POST /auth/refresh** — rotates the token pair. Old refresh token is now single-use; replaying it triggers reuse detection (see Negative Tests).
-17. **Auth → POST /auth/logout** — revokes the current session.
+16. **MFA → POST /mfa/setup → POST /mfa/verify-setup** — enroll TOTP. The pre-request scripts compute a live 6-digit code from the captured `mfaSecret`, so the flow runs without a phone. Backup codes are saved to `mfaBackupCode`.
+17. **Auth → POST /auth/refresh** — rotates the token pair. Old refresh token is now single-use; replaying it triggers reuse detection (see Negative Tests).
+18. **Auth → POST /auth/logout** — revokes the current session.
+
+### Identity federation folders (MFA / OAuth / SSO)
+
+- **MFA** — fully runnable in Postman. `POST /mfa/setup` captures `mfaSecret`; the verify/challenge/disable requests auto-generate the current TOTP via an inline crypto-js generator in their pre-request scripts. Also covers backup codes, the login MFA challenge (`/auth/mfa/challenge` → `/auth/mfa/verify`), and the org MFA policy endpoints.
+- **OAuth** — the `GET /oauth/:provider` start and `:provider/callback` routes are browser-redirect flows (they 302 to the provider) and can't complete in Postman; use a browser. The linking endpoints (`/oauth/accounts`, `/oauth/link/:provider`, `/oauth/unlink/:provider`) are normal authenticated JSON APIs. Set `oauthProvider` (`google` / `github` / `microsoft`) before running them.
+- **SSO (SAML)** — the configuration CRUD requires an org-admin token and is runnable. `GET /sso/:organizationSlug/login` 302-redirects to the IdP and `POST /sso/:organizationSlug/acs` is invoked by the IdP with a signed `SAMLResponse`, so those two are browser/IdP-driven. Set `organizationSlug` to your org's slug; `ssoConfigId` is captured by `POST /sso/configurations`.
 
 ## How token auto-binding works
 
@@ -68,6 +75,11 @@ Per-request **test scripts** persist key fields:
 | `POST /policies`                 | `policyId`        |
 | `POST /policies/:id/conditions`  | `conditionId`     |
 | `POST /policies/:id/assignments` | `assignmentId`    |
+| `POST /mfa/setup`                | `mfaSecret`       |
+| `POST /mfa/verify-setup`         | `mfaBackupCode`, `mfaBackupCodes` |
+| `POST /auth/mfa/challenge`       | `mfaChallengeToken` |
+| `POST /auth/mfa/verify`          | `accessToken`, `refreshToken`, `sessionId` |
+| `POST /sso/configurations`       | `ssoConfigId`     |
 
 Once `accessToken` is set, you don't have to touch the **Authorization** tab on individual requests — bearer auth resolves it from the active environment.
 
@@ -130,7 +142,6 @@ Several Authorization Tests reference resources that aren't shipped yet — they
 | ------- | ----------------- |
 | `ABAC ownership — edit own profile` | a `PATCH /users/:id` endpoint ships and registers a `user` resource loader (already registered as a default loader, just no controller). |
 | `ABAC department-based — manager reads same-department user` | same — needs a `users` resource controller. |
-| `ABAC Enterprise-plan-required-for-sso` | SSO module ships (`/sso/...` routes). |
 
 The underlying policies (`edit-own-profile`, `manager-can-access-department-users`, `enterprise-plan-required-for-sso`) are already seeded by `npm run db:seed`, so the engine side is fully testable in isolation via the unit tests under [src/modules/authorization/services/](../src/modules/authorization/services/).
 
