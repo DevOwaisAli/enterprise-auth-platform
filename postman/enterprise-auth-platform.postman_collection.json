@@ -8,7 +8,11 @@
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
     ]
   },
   "event": [
@@ -83,13 +87,24 @@
         {
           "name": "GET /health",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{serverUrl}}/health",
-              "host": ["{{serverUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{serverUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             },
             "description": "Returns service status, env, version, memory usage and downstream service probes."
           },
@@ -111,7 +126,6 @@
         }
       ]
     },
-
     {
       "name": "Auth",
       "description": "Setup-side auth: register, login, refresh, forgot-password. Destructive flows (logout, change-password, reset, switch-org) live in later folders.",
@@ -119,16 +133,29 @@
         {
           "name": "POST /auth/register",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -161,20 +188,32 @@
             }
           ]
         },
-
         {
           "name": "POST /auth/login",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -209,20 +248,32 @@
             }
           ]
         },
-
         {
           "name": "POST /auth/refresh",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -249,20 +300,32 @@
             }
           ]
         },
-
         {
           "name": "POST /auth/forgot-password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/forgot-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "forgot-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -284,7 +347,6 @@
         }
       ]
     },
-
     {
       "name": "Organizations",
       "description": "Org CRUD. The creator is auto-added as a Membership with the global `admin` role.",
@@ -294,13 +356,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -327,11 +399,20 @@
           "name": "GET /organizations",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             }
           },
           "event": [
@@ -352,11 +433,21 @@
           "name": "GET /organizations/:id",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}"
+              ]
             }
           },
           "event": [
@@ -376,13 +467,24 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -403,7 +505,6 @@
         }
       ]
     },
-
     {
       "name": "Switch Organization",
       "description": "After an org exists, switch the active organization context on the current session — mints a new access token bound to that org's membership.",
@@ -413,13 +514,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/switch-organization",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "switch-organization"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "switch-organization"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -447,7 +559,6 @@
         }
       ]
     },
-
     {
       "name": "Sessions",
       "description": "Read-only session inspection. Revoking a session lives in the Cleanup folder.",
@@ -456,11 +567,21 @@
           "name": "GET /auth/sessions",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/auth/sessions",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "sessions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "sessions"
+              ]
             }
           },
           "event": [
@@ -479,7 +600,1099 @@
         }
       ]
     },
-
+    {
+      "name": "MFA",
+      "description": "Multi-factor authentication: TOTP enrollment, backup codes, and the login MFA challenge.\n\nThe pre-request scripts compute live TOTP codes from `mfaSecret` (captured by \"POST /mfa/setup\") using the bundled crypto-js, so the enroll → verify → challenge flow is fully runnable end to end.",
+      "item": [
+        {
+          "name": "POST /mfa/setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mfa/setup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mfa",
+                "setup"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.secret) {",
+                  "  pm.environment.set('mfaSecret', json.data.secret);",
+                  "}",
+                  "pm.test('returns otpauth url + qr', () => {",
+                  "  pm.expect(json.data.otpauthUrl).to.include('otpauth://');",
+                  "  pm.expect(json.data.qrCodeDataUrl).to.include('data:image/png');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /mfa/verify-setup",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mfa/verify-setup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mfa",
+                "verify-setup"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{mfaCode}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function base32ToHex(b32) {",
+                  "  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+                  "  let bits = '';",
+                  "  b32 = (b32 || '').replace(/=+$/, '').toUpperCase();",
+                  "  for (const ch of b32) {",
+                  "    const val = alphabet.indexOf(ch);",
+                  "    if (val < 0) continue;",
+                  "    bits += val.toString(2).padStart(5, '0');",
+                  "  }",
+                  "  let hex = '';",
+                  "  for (let i = 0; i + 8 <= bits.length; i += 8) {",
+                  "    hex += parseInt(bits.substr(i, 8), 2).toString(16).padStart(2, '0');",
+                  "  }",
+                  "  return hex;",
+                  "}",
+                  "function generateTotp(secret) {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const key = CryptoJS.enc.Hex.parse(base32ToHex(secret));",
+                  "  const epoch = Math.floor(Date.now() / 1000 / 30);",
+                  "  const timeHex = epoch.toString(16).padStart(16, '0');",
+                  "  const hmac = CryptoJS.HmacSHA1(CryptoJS.enc.Hex.parse(timeHex), key);",
+                  "  const hex = hmac.toString(CryptoJS.enc.Hex);",
+                  "  const offset = parseInt(hex.substr(hex.length - 1), 16);",
+                  "  const part = hex.substr(offset * 2, 8);",
+                  "  const bin = parseInt(part, 16) & 0x7fffffff;",
+                  "  return (bin % 1000000).toString().padStart(6, '0');",
+                  "}",
+                  "const secret = pm.environment.get('mfaSecret');",
+                  "if (secret) {",
+                  "  pm.environment.set('mfaCode', generateTotp(secret));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json?.data?.codes) && json.data.codes.length) {",
+                  "  pm.environment.set('mfaBackupCode', json.data.codes[0]);",
+                  "  pm.environment.set('mfaBackupCodes', json.data.codes.join(','));",
+                  "}",
+                  "pm.test('returns backup codes', () => pm.expect(json.data.codes).to.be.an('array').with.length.greaterThan(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /mfa/backup-codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mfa/backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mfa",
+                "backup-codes"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('reports remaining count', () => pm.expect(json.data).to.have.property('remaining'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /mfa/regenerate-backup-codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mfa/regenerate-backup-codes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mfa",
+                "regenerate-backup-codes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json?.data?.codes) && json.data.codes.length) {",
+                  "  pm.environment.set('mfaBackupCode', json.data.codes[0]);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/mfa/challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/challenge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "challenge"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.challengeToken) {",
+                  "  pm.environment.set('mfaChallengeToken', json.data.challengeToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/mfa/verify (TOTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"method\": \"totp\",\n  \"code\": \"{{mfaCode}}\",\n  \"deviceName\": \"postman\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function base32ToHex(b32) {",
+                  "  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+                  "  let bits = '';",
+                  "  b32 = (b32 || '').replace(/=+$/, '').toUpperCase();",
+                  "  for (const ch of b32) {",
+                  "    const val = alphabet.indexOf(ch);",
+                  "    if (val < 0) continue;",
+                  "    bits += val.toString(2).padStart(5, '0');",
+                  "  }",
+                  "  let hex = '';",
+                  "  for (let i = 0; i + 8 <= bits.length; i += 8) {",
+                  "    hex += parseInt(bits.substr(i, 8), 2).toString(16).padStart(2, '0');",
+                  "  }",
+                  "  return hex;",
+                  "}",
+                  "function generateTotp(secret) {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const key = CryptoJS.enc.Hex.parse(base32ToHex(secret));",
+                  "  const epoch = Math.floor(Date.now() / 1000 / 30);",
+                  "  const timeHex = epoch.toString(16).padStart(16, '0');",
+                  "  const hmac = CryptoJS.HmacSHA1(CryptoJS.enc.Hex.parse(timeHex), key);",
+                  "  const hex = hmac.toString(CryptoJS.enc.Hex);",
+                  "  const offset = parseInt(hex.substr(hex.length - 1), 16);",
+                  "  const part = hex.substr(offset * 2, 8);",
+                  "  const bin = parseInt(part, 16) & 0x7fffffff;",
+                  "  return (bin % 1000000).toString().padStart(6, '0');",
+                  "}",
+                  "const secret = pm.environment.get('mfaSecret');",
+                  "if (secret) {",
+                  "  pm.environment.set('mfaCode', generateTotp(secret));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.tokens?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.tokens.accessToken);",
+                  "  pm.environment.set('refreshToken', json.data.tokens.refreshToken);",
+                  "}",
+                  "if (json?.data?.sessionId) {",
+                  "  pm.environment.set('sessionId', json.data.sessionId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/mfa/verify (Backup Code)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"challengeToken\": \"{{mfaChallengeToken}}\",\n  \"method\": \"backup_code\",\n  \"code\": \"{{mfaBackupCode}}\",\n  \"deviceName\": \"postman\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.tokens?.accessToken) {",
+                  "  pm.environment.set('accessToken', json.data.tokens.accessToken);",
+                  "  pm.environment.set('refreshToken', json.data.tokens.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /mfa/disable",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/mfa/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "mfa",
+                "disable"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{password}}\",\n  \"code\": \"{{mfaCode}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "function base32ToHex(b32) {",
+                  "  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';",
+                  "  let bits = '';",
+                  "  b32 = (b32 || '').replace(/=+$/, '').toUpperCase();",
+                  "  for (const ch of b32) {",
+                  "    const val = alphabet.indexOf(ch);",
+                  "    if (val < 0) continue;",
+                  "    bits += val.toString(2).padStart(5, '0');",
+                  "  }",
+                  "  let hex = '';",
+                  "  for (let i = 0; i + 8 <= bits.length; i += 8) {",
+                  "    hex += parseInt(bits.substr(i, 8), 2).toString(16).padStart(2, '0');",
+                  "  }",
+                  "  return hex;",
+                  "}",
+                  "function generateTotp(secret) {",
+                  "  const CryptoJS = require('crypto-js');",
+                  "  const key = CryptoJS.enc.Hex.parse(base32ToHex(secret));",
+                  "  const epoch = Math.floor(Date.now() / 1000 / 30);",
+                  "  const timeHex = epoch.toString(16).padStart(16, '0');",
+                  "  const hmac = CryptoJS.HmacSHA1(CryptoJS.enc.Hex.parse(timeHex), key);",
+                  "  const hex = hmac.toString(CryptoJS.enc.Hex);",
+                  "  const offset = parseInt(hex.substr(hex.length - 1), 16);",
+                  "  const part = hex.substr(offset * 2, 8);",
+                  "  const bin = parseInt(part, 16) & 0x7fffffff;",
+                  "  return (bin % 1000000).toString().padStart(6, '0');",
+                  "}",
+                  "const secret = pm.environment.get('mfaSecret');",
+                  "if (secret) {",
+                  "  pm.environment.set('mfaCode', generateTotp(secret));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /organizations/:orgId/mfa-policy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/mfa-policy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "mfa-policy"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /organizations/:orgId/mfa-policy",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/organizations/{{organizationId}}/mfa-policy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "mfa-policy"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requireMfa\": true,\n  \"allowBackupCodes\": true,\n  \"allowedMfaMethods\": [\n    \"totp\",\n    \"backup_code\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "OAuth",
+      "description": "OAuth2 social login and account linking (Google / GitHub / Microsoft).\n\nNOTE: the `GET /oauth/:provider` and `:provider/callback` routes are browser-redirect flows and cannot be completed inside Postman — they 302 to the provider consent screen. Use a browser for the interactive parts. The linking/listing endpoints below are normal authenticated JSON APIs.",
+      "item": [
+        {
+          "name": "GET /oauth/google (start — redirects to provider)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "google"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Redirects to provider (302)', () => pm.expect([301,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /oauth/github (start — redirects to provider)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/github",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "github"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Redirects to provider (302)', () => pm.expect([301,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /oauth/microsoft (start — redirects to provider)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/microsoft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "microsoft"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Redirects to provider (302)', () => pm.expect([301,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /oauth/accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "accounts"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('returns a list', () => pm.expect(json.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /oauth/link/:provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/link/{{oauthProvider}}?redirectTo=/settings/security",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "link",
+                "{{oauthProvider}}"
+              ],
+              "query": [
+                {
+                  "key": "redirectTo",
+                  "value": "/settings/security"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200/201', () => pm.expect([200,201]).to.include(pm.response.code));",
+                  "const json = pm.response.json();",
+                  "pm.test('returns an authorization url', () => pm.expect(json.data.authorizationUrl).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /oauth/unlink/:provider",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/oauth/unlink/{{oauthProvider}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "oauth",
+                "unlink",
+                "{{oauthProvider}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SSO (SAML)",
+      "description": "Enterprise SAML SSO: per-organization configuration CRUD plus the SP-initiated login and ACS endpoints.\n\nNOTE: `GET /sso/:organizationSlug/login` 302-redirects to the IdP and `POST /sso/:organizationSlug/acs` is invoked by the IdP with a signed SAMLResponse — these are browser/IdP-driven and not fully runnable in Postman. The configuration endpoints require an org admin token.",
+      "item": [
+        {
+          "name": "POST /sso/configurations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/configurations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "configurations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"organizationId\": \"{{organizationId}}\",\n  \"providerName\": \"Okta\",\n  \"entryPoint\": \"https://example.okta.com/app/abc/sso/saml\",\n  \"issuer\": \"http://www.okta.com/exk1234\",\n  \"certificate\": \"MIIDpDCCAoygAwIBAgIGAV2ka+55MA0GCSqGSIb3DQEBC... (paste IdP X.509 cert here)\",\n  \"metadataUrl\": \"https://example.okta.com/app/abc/sso/saml/metadata\",\n  \"isEnabled\": true,\n  \"allowIdpInitiated\": false,\n  \"ssoOnlyMode\": false,\n  \"defaultRoleSlug\": \"member\",\n  \"attributeMapping\": {\n    \"email\": \"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress\",\n    \"firstName\": \"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname\",\n    \"lastName\": \"http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname\",\n    \"department\": \"department\",\n    \"jobTitle\": \"jobTitle\",\n    \"groups\": \"http://schemas.xmlsoap.org/claims/Group\"\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json?.data?.id) {",
+                  "  pm.environment.set('ssoConfigId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /sso/configurations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/configurations?organizationId={{organizationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "configurations"
+              ],
+              "query": [
+                {
+                  "key": "organizationId",
+                  "value": "{{organizationId}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('returns a list', () => pm.expect(json.data).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /sso/configurations/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/configurations/{{ssoConfigId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "configurations",
+                "{{ssoConfigId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isEnabled\": true,\n  \"ssoOnlyMode\": true,\n  \"allowIdpInitiated\": true\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /sso/:organizationSlug/login (redirects to IdP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/{{organizationSlug}}/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "{{organizationSlug}}",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Redirects to IdP (302)', () => pm.expect([301,302]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /sso/:organizationSlug/acs (IdP-driven)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/{{organizationSlug}}/acs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "{{organizationSlug}}",
+                "acs"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"SAMLResponse\": \"<base64-encoded-signed-saml-response>\",\n  \"RelayState\": \"<relay-state-from-login>\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// The IdP normally POSTs this as application/x-www-form-urlencoded after authenticating the user.",
+                  "pm.test('Returns tokens on a valid assertion', () => {",
+                  "  if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json?.data?.accessToken) pm.environment.set('accessToken', json.data.accessToken);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /sso/configurations/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sso/configurations/{{ssoConfigId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "configurations",
+                "{{ssoConfigId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Members",
       "description": "List members + update ABAC attributes. In Newman runs, `targetUserId` defaults to the current user (so PATCH operates on self).",
@@ -488,11 +1701,22 @@
           "name": "GET /organizations/:orgId/members",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/members",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "members"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "members"
+              ]
             }
           },
           "event": [
@@ -523,13 +1747,26 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/members/{{targetUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "members", "{{targetUserId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "members",
+                "{{targetUserId}}"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -552,16 +1789,29 @@
         {
           "name": "POST /auth/refresh — after member update",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -590,7 +1840,6 @@
         }
       ]
     },
-
     {
       "name": "RBAC Permissions",
       "description": "Global permission registry.",
@@ -599,11 +1848,20 @@
           "name": "GET /permissions",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
             }
           },
           "event": [
@@ -628,13 +1886,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -656,7 +1924,6 @@
         }
       ]
     },
-
     {
       "name": "RBAC Roles",
       "description": "Org-scoped roles. Assigning a role to a membership bumps `permissionsVersion`; an auto-refresh follows.",
@@ -666,13 +1933,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -699,11 +1978,22 @@
           "name": "GET /organizations/:orgId/roles",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles"
+              ]
             }
           },
           "event": [
@@ -722,11 +2012,23 @@
           "name": "GET /organizations/:orgId/roles/:id",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}"
+              ]
             }
           },
           "event": [
@@ -746,13 +2048,26 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -776,13 +2091,27 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}",
+                "permissions"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -805,11 +2134,25 @@
           "name": "POST /organizations/:orgId/roles/:id/members/:membershipId",
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/members/{{targetMembershipId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "members", "{{targetMembershipId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}",
+                "members",
+                "{{targetMembershipId}}"
+              ]
             },
             "description": "Assigning a role bumps the target membership's permissionsVersion. Newman auto-refreshes after."
           },
@@ -828,16 +2171,29 @@
         {
           "name": "POST /auth/refresh — after role assignment",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -861,7 +2217,6 @@
         }
       ]
     },
-
     {
       "name": "ABAC Policies",
       "description": "Create / list / update policies. Each mutation invalidates the per-org cache and bumps all members' versions — a refresh follows.",
@@ -871,13 +2226,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/policies",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -901,16 +2266,29 @@
         {
           "name": "POST /auth/refresh — after policy create",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -936,11 +2314,20 @@
           "name": "GET /policies",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/policies",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies"
+              ]
             }
           },
           "event": [
@@ -959,11 +2346,21 @@
           "name": "GET /policies/:id",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}"
+              ]
             }
           },
           "event": [
@@ -983,13 +2380,24 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1011,16 +2419,29 @@
         {
           "name": "POST /auth/refresh — after policy update",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1044,7 +2465,6 @@
         }
       ]
     },
-
     {
       "name": "ABAC Conditions",
       "description": "All conditions on a policy are AND-combined.",
@@ -1054,13 +2474,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}/conditions",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}", "conditions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}",
+                "conditions"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1084,16 +2516,29 @@
         {
           "name": "POST /auth/refresh — after condition add",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1120,13 +2565,26 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}/conditions/{{conditionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}", "conditions", "{{conditionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}",
+                "conditions",
+                "{{conditionId}}"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1148,16 +2606,29 @@
         {
           "name": "POST /auth/refresh — after condition patch",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1181,7 +2652,6 @@
         }
       ]
     },
-
     {
       "name": "ABAC Assignments",
       "description": "Bind a policy to a role, user, or organization.",
@@ -1191,13 +2661,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}/assignments",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}", "assignments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}",
+                "assignments"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1221,16 +2703,29 @@
         {
           "name": "POST /auth/refresh — after assignment create",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1254,7 +2749,6 @@
         }
       ]
     },
-
     {
       "name": "Invitations",
       "description": "Send/list invitations. Revoke + accept live in Cleanup and Token-Required Flows respectively.",
@@ -1264,13 +2758,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "invitations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "invitations"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1295,11 +2801,22 @@
           "name": "GET /organizations/:orgId/invitations",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "invitations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "invitations"
+              ]
             }
           },
           "event": [
@@ -1316,7 +2833,6 @@
         }
       ]
     },
-
     {
       "name": "Authorization Tests",
       "description": "Read-only checks against the live RBAC + ABAC engine. Tests that need bespoke state (suspended member, non-admin user) skip themselves in Newman runs.",
@@ -1325,11 +2841,20 @@
           "name": "RBAC permission allowed — list permissions as admin",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
             }
           },
           "event": [
@@ -1348,11 +2873,20 @@
           "name": "RBAC permission denied — list permissions as plain user (manual)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
             },
             "description": "Needs a non-admin access token in `accessToken`. Skipped in Newman because the auto-run uses an admin token."
           },
@@ -1386,11 +2920,21 @@
           "name": "ABAC same-organization-access — fetch own org",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}"
+              ]
             }
           },
           "event": [
@@ -1410,15 +2954,29 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/users/{{userId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{userId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}"
+              ]
             },
-            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Enterprise\"\n}" },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Enterprise\"\n}"
+            },
             "description": "Placeholder — `/users/:id` ships in a later phase. The `edit-own-profile` policy is already seeded and engine-tested."
           },
           "event": [
@@ -1439,11 +2997,21 @@
           "name": "ABAC department-based — manager reads same-department user (placeholder)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/users/{{targetUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["users", "{{targetUserId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{targetUserId}}"
+              ]
             }
           },
           "event": [
@@ -1464,11 +3032,20 @@
           "name": "ABAC DENY — suspended member is blocked (manual)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/permissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions"
+              ]
             },
             "description": "Skipped in Newman: requires a separate flow that first sets the membership status to SUSPENDED."
           },
@@ -1501,11 +3078,21 @@
           "name": "ABAC Enterprise-plan-required-for-sso (placeholder)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/sso/providers",
-              "host": ["{{baseUrl}}"],
-              "path": ["sso", "providers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sso",
+                "providers"
+              ]
             },
             "description": "Placeholder — SSO ships in a later phase."
           },
@@ -1527,11 +3114,22 @@
           "name": "Cross-tenant access blocked",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/00000000-0000-7000-8000-000000000000/members",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "00000000-0000-7000-8000-000000000000", "members"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "00000000-0000-7000-8000-000000000000",
+                "members"
+              ]
             },
             "description": "Param orgId differs from JWT organizationId. TenantGuard rejects."
           },
@@ -1549,7 +3147,6 @@
         }
       ]
     },
-
     {
       "name": "Negative Tests",
       "description": "Expected error responses.",
@@ -1557,13 +3154,24 @@
         {
           "name": "401 — protected route without token",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             }
           },
           "event": [
@@ -1581,16 +3189,29 @@
         {
           "name": "400 — invalid login payload",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1612,16 +3233,29 @@
         {
           "name": "401 — login with wrong password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1649,13 +3283,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1681,11 +3325,21 @@
           "name": "404 — non-existent organization",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/00000000-0000-7000-8000-deaddeaddead",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "00000000-0000-7000-8000-deaddeaddead"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "00000000-0000-7000-8000-deaddeaddead"
+              ]
             }
           },
           "event": [
@@ -1703,16 +3357,29 @@
         {
           "name": "401 — refresh token reuse",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1733,7 +3400,6 @@
         }
       ]
     },
-
     {
       "name": "Token-Required Flows",
       "description": "Endpoints that consume a token only available from an email or invitation. Skipped in Newman by default — populate the matching env var (emailVerificationToken, passwordResetToken, invitationToken) and re-run to test these in Postman.",
@@ -1741,16 +3407,29 @@
         {
           "name": "POST /auth/verify-email",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/verify-email",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "verify-email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-email"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1785,16 +3464,29 @@
         {
           "name": "POST /auth/reset-password",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "reset-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1831,13 +3523,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/organizations/invitations/accept",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "invitations", "accept"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "invitations",
+                "accept"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1871,7 +3575,6 @@
         }
       ]
     },
-
     {
       "name": "Cleanup",
       "description": "Destructive operations — run LAST. Tear down everything created during the run. Assertions are tolerant where the operation may legitimately fail (e.g. last-admin removal, permission in use).",
@@ -1880,11 +3583,23 @@
           "name": "DELETE /policies/:id/assignments/:assignmentId",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}/assignments/{{assignmentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}", "assignments", "{{assignmentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}",
+                "assignments",
+                "{{assignmentId}}"
+              ]
             }
           },
           "event": [
@@ -1902,16 +3617,29 @@
         {
           "name": "POST /auth/refresh — after assignment delete",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1937,11 +3665,23 @@
           "name": "DELETE /policies/:id/conditions/:conditionId",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}/conditions/{{conditionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}", "conditions", "{{conditionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}",
+                "conditions",
+                "{{conditionId}}"
+              ]
             }
           },
           "event": [
@@ -1959,16 +3699,29 @@
         {
           "name": "POST /auth/refresh — after condition delete",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -1994,11 +3747,21 @@
           "name": "DELETE /policies/:id",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/policies/{{policyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["policies", "{{policyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}"
+              ]
             }
           },
           "event": [
@@ -2016,16 +3779,29 @@
         {
           "name": "POST /auth/refresh — after policy delete",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -2051,11 +3827,25 @@
           "name": "DELETE /organizations/:orgId/roles/:id/members/:membershipId",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}/members/{{targetMembershipId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}", "members", "{{targetMembershipId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}",
+                "members",
+                "{{targetMembershipId}}"
+              ]
             }
           },
           "event": [
@@ -2073,16 +3863,29 @@
         {
           "name": "POST /auth/refresh — after role revoke",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -2108,11 +3911,23 @@
           "name": "DELETE /organizations/:orgId/roles/:id",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/roles/{{roleId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "roles", "{{roleId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "roles",
+                "{{roleId}}"
+              ]
             }
           },
           "event": [
@@ -2131,11 +3946,21 @@
           "name": "DELETE /permissions/:id (tolerant)",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/permissions/{{permissionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["permissions", "{{permissionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "permissions",
+                "{{permissionId}}"
+              ]
             },
             "description": "Seeded permissions are referenced by system roles → 409. New permissions are deletable → 204."
           },
@@ -2157,11 +3982,23 @@
           "name": "DELETE /organizations/:orgId/invitations/:id",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/invitations/{{invitationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "invitations", "{{invitationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "invitations",
+                "{{invitationId}}"
+              ]
             }
           },
           "event": [
@@ -2180,11 +4017,23 @@
           "name": "DELETE /organizations/:orgId/members/:userId (tolerant — last admin = 409)",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}/members/{{targetUserId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}", "members", "{{targetUserId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}",
+                "members",
+                "{{targetUserId}}"
+              ]
             },
             "description": "In Newman the only member is the admin → expect 409 LAST_ADMIN_REMOVAL."
           },
@@ -2207,13 +4056,24 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-Correlation-ID", "value": "{{correlationId}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
             ],
             "url": {
               "raw": "{{baseUrl}}/auth/change-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "change-password"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -2238,11 +4098,21 @@
           "name": "DELETE /organizations/:id",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/organizations/{{organizationId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["organizations", "{{organizationId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "organizations",
+                "{{organizationId}}"
+              ]
             },
             "description": "Soft-deletes the org. Existing tokens stay valid because org.status remains ACTIVE."
           },
@@ -2262,11 +4132,22 @@
           "name": "DELETE /auth/sessions/:id",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/auth/sessions/{{sessionId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "sessions", "{{sessionId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "sessions",
+                "{{sessionId}}"
+              ]
             },
             "description": "Revoking the current session is equivalent to logout. After this point, the access token is invalid — `POST /auth/logout` below will return 401."
           },
@@ -2286,11 +4167,21 @@
           "name": "POST /auth/logout (post-revoke — tolerant)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
             }
           },
           "event": [
@@ -2311,11 +4202,21 @@
           "name": "POST /auth/logout-all (post-revoke — tolerant)",
           "request": {
             "method": "POST",
-            "header": [{ "key": "X-Correlation-ID", "value": "{{correlationId}}" }],
+            "header": [
+              {
+                "key": "X-Correlation-ID",
+                "value": "{{correlationId}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/auth/logout-all",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout-all"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
             }
           },
           "event": [

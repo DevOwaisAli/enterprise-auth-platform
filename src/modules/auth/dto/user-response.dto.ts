@@ -26,6 +26,15 @@ export class LoginResponseDto {
   @ApiProperty() sessionId!: string;
 }
 
+export class MfaChallengeRequiredResponseDto {
+  @ApiProperty({ default: true }) mfaRequired!: true;
+  @ApiProperty({ description: 'Short-lived pre-auth token to submit to /auth/mfa/verify' })
+  challengeToken!: string;
+  @ApiProperty() challengeExpiresAt!: Date;
+  @ApiProperty({ type: [String], description: 'Allowed methods, e.g. ["totp","backup_code"]' })
+  allowedMethods!: string[];
+}
+
 export class RegisterResponseDto {
   @ApiProperty({ type: UserResponseDto }) user!: UserResponseDto;
   @ApiProperty({ description: 'Verification token expiry (the raw token is sent via email)' })
