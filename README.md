@@ -1,8 +1,33 @@
+<!-- Repository cover image — replace assets/cover.png with your own banner -->
+<p align="center">
+  <img src="assets/cover.png" alt="enterprise-auth-platform" width="100%" />
+</p>
+
 # enterprise-auth-platform
 
 Enterprise-grade authentication and authorization platform built on NestJS, PostgreSQL, Redis, BullMQ, and Pino.
 
-Current scope: foundation + core infrastructure + core authentication + **organizations, RBAC, ABAC, tenant isolation, invitations**. MFA, OAuth, and SAML are intentionally not implemented yet — see the [roadmap](#roadmap).
+<!-- Repository badges -->
+[![License: MIT](https://img.shields.io/github/license/DevOwaisAli/enterprise-auth-platform?color=blue)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/DevOwaisAli/enterprise-auth-platform?style=flat&logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/stargazers)
+[![Forks](https://img.shields.io/github/forks/DevOwaisAli/enterprise-auth-platform?style=flat&logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/network/members)
+[![Contributors](https://img.shields.io/github/contributors/DevOwaisAli/enterprise-auth-platform?logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/graphs/contributors)
+[![Watchers](https://img.shields.io/github/watchers/DevOwaisAli/enterprise-auth-platform?style=flat&logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/watchers)
+[![Repo views](https://visitor-badge.laobi.icu/badge?page_id=DevOwaisAli.enterprise-auth-platform)](https://github.com/DevOwaisAli/enterprise-auth-platform)
+
+[![Issues](https://img.shields.io/github/issues/DevOwaisAli/enterprise-auth-platform?logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/DevOwaisAli/enterprise-auth-platform?logo=github)](https://github.com/DevOwaisAli/enterprise-auth-platform/pulls)
+[![Last commit](https://img.shields.io/github/last-commit/DevOwaisAli/enterprise-auth-platform?logo=git&logoColor=white)](https://github.com/DevOwaisAli/enterprise-auth-platform/commits)
+[![Repo size](https://img.shields.io/github/repo-size/DevOwaisAli/enterprise-auth-platform)](https://github.com/DevOwaisAli/enterprise-auth-platform)
+[![Top language](https://img.shields.io/github/languages/top/DevOwaisAli/enterprise-auth-platform?logo=typescript&logoColor=white)](https://github.com/DevOwaisAli/enterprise-auth-platform)
+
+[![NestJS](https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white)](https://nestjs.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io)
+[![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io)
+
+Current scope: foundation + core infrastructure + core authentication + **organizations, RBAC, ABAC, tenant isolation, invitations**, plus **MFA/TOTP, OAuth2 social login (Google/GitHub/Microsoft), and SAML SSO with JIT provisioning** — see the [roadmap](#roadmap).
 
 ## Quick start
 

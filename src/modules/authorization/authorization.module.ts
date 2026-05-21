@@ -39,6 +39,10 @@ import { RoleService } from './services/role.service';
     PolicyService,
     RoleService,
     ResourceLoaderRegistry,
+    // ConditionEvaluatorService is a constructor dependency of AuthorizationGuard;
+    // it must be exported so the guard resolves when used in modules that import
+    // AuthorizationModule (e.g. MfaModule, SsoModule).
+    ConditionEvaluatorService,
     AuthorizationGuard,
     PermissionsGuard,
   ],
